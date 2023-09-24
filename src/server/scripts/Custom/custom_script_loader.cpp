@@ -16,10 +16,14 @@
  */
 
 // This is where scripts' loading functions should be declared:
-
-
+void AddSC_CustomPlayerScript();
+void AddSC_TemplateNPC();
+void AddSC_npc_tentacle_of_the_old_ones();
 // The name of this function should match:
 // void Add${NameOfDirectory}Scripts()
 void AddCustomScripts()
 {
+    AddSC_CustomPlayerScript();
+    AddSC_TemplateNPC();
+    AddSC_npc_tentacle_of_the_old_ones();
 }
