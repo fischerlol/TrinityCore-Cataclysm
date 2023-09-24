@@ -38,6 +38,8 @@
 #include "SpellMgr.h"
 #include "Vehicle.h"
 #include "World.h"
+#include "SpellAuraEffects.h"
+#include "Map.h"
 
 /*########
 # npc_air_force_bots
@@ -3144,6 +3146,53 @@ private:
     bool _hit;
 };
 
+enum parasiteSpells
+{
+    SPELL_BLOOD_BURST = 81280,
+    SPELL_DK_SCALING_5 = 110474,
+};
+
+class npc_dk_blood_parasite : public CreatureScript
+{
+public:
+    npc_dk_blood_parasite() : CreatureScript("npc_dk_blood_parasite") { }
+
+    struct npc_dk_blood_parasiteAI : public ScriptedAI
+    {
+        npc_dk_blood_parasiteAI(Creature* creature) : ScriptedAI(creature)
+        {
+            DoCast(me, SPELL_DK_SCALING_5, true);
+        }
+
+        void Reset()
+        {
+            if (Unit* summoner = me->GetOwner())
+                if (Unit* target = summoner->GetVictim())
+                    if (me->CanCreatureAttack(target))
+                        me->AI()->AttackStart(target);
+        }
+
+        void JustDied(Unit* /*killer*/)
+        {
+            DoCast(me, SPELL_BLOOD_BURST, true);
+        }
+    };
+
+    CreatureAI* GetAI(Creature* creature) const
+    {
+        return new npc_dk_blood_parasiteAI(creature);
+    }
+};
+
+enum searingTotem
+{
+    SPELL_TOTEMIC_WRATH = 77746,
+    SPELL_SEARING_BOLT = 3606,
+    SPELL_FLAME_SHOCK = 8050,
+    SPELL_STORMSTRIKE = 17364,
+    EVENT_SEARING_BOLT = 1
+};
+
 void AddSC_npcs_special()
 {
     new npc_air_force_bots();
@@ -3174,4 +3223,5 @@ void AddSC_npcs_special()
     RegisterCreatureAI(npc_mage_orb);
     new npc_druid_treant();
     RegisterCreatureAI(npc_darkmoon_island_gnoll);
+    new npc_dk_blood_parasite();
 }
