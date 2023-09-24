@@ -404,7 +404,6 @@ bool sTemplateNPC::OverwriteTemplate(Player* player, std::string& playerSpecStr)
 
 void sTemplateNPC::ExtractGearTemplateToDB(Player* player, std::string& playerSpecStr)
 {
-    CharacterDatabase.PExecute("DELETE FROM template_npc_glyphs WHERE playerClass = '%s' AND playerSpec = '%s';", GetClassString(player).c_str(), playerSpecStr.c_str());
     CharacterDatabase.PExecute("DELETE FROM template_npc_human WHERE playerClass = '%s' AND playerSpec = '%s';", GetClassString(player).c_str(), playerSpecStr.c_str());
     CharacterDatabase.PExecute("DELETE FROM template_npc_alliance WHERE playerClass = '%s' AND playerSpec = '%s';", GetClassString(player).c_str(), playerSpecStr.c_str());
     CharacterDatabase.PExecute("DELETE FROM template_npc_horde WHERE playerClass = '%s' AND playerSpec = '%s';", GetClassString(player).c_str(), playerSpecStr.c_str());
@@ -485,6 +484,8 @@ void sTemplateNPC::ExtractTalentTemplateToDB(Player* player, std::string& player
 
 void sTemplateNPC::ExtractGlyphsTemplateToDB(Player* player, std::string& playerSpecStr)
 {
+    CharacterDatabase.PExecute("DELETE FROM template_npc_glyphs WHERE playerClass = '%s' AND playerSpec = '%s';", GetClassString(player).c_str(), playerSpecStr.c_str());
+
     QueryResult result = CharacterDatabase.PQuery("SELECT glyph1, glyph2, glyph3, glyph4, glyph5, glyph6, glyph7, glyph8, glyph9 "
         "FROM character_glyphs WHERE guid = '%u' AND talentGroup = '%u';", player->GetGUID(), player->GetActiveSpec());
 
@@ -590,7 +591,6 @@ public:
             ClearGossipMenuFor(player);
             AddGossipItemFor(player, GOSSIP_ICON_CHAT, "|cff00ff00|TInterface\\icons\\achievement_featsofstrength_gladiator_08:40|t|r Cataclysmic Gladiator Gear (Season 11)", GOSSIP_SENDER_MAIN, GOSSIP_PVP_GEAR);
             AddGossipItemFor(player, GOSSIP_ICON_CHAT, "|cff00ff00|TInterface\\icons\\achievment_boss_madnessofdeathwing:40|t|r Best in Slot Raid Gear (T13)", GOSSIP_SENDER_MAIN, GOSSIP_PVE_GEAR);
-            AddGossipItemFor(player, GOSSIP_ICON_CHAT, "Extract Gear/Glyphs", GOSSIP_SENDER_MAIN, GOSSIP_EXTRACT_GEAR);
             SendGossipMenuFor(player, 55002, me->GetGUID());
             return true;
         }
@@ -622,20 +622,6 @@ public:
                 ClearGossipMenuFor(player);
                 AddPvEOptionsForClass(player);
                 SendGossipMenuFor(player, 55002, me->GetGUID());
-            }
-            // EXTRACT GEAR
-            else if (action == GOSSIP_EXTRACT_GEAR)
-            {
-                switch (player->getClass())
-                {
-                case CLASS_SHAMAN:
-                    sTemplateNpcMgr->sTalentsSpec = "Elemental-PvE";
-                    TC_LOG_INFO("server.worldserver", ">>TEMPLATE NPC: GOSSIP_EXTRACT_GEAR selected.");
-                    sTemplateNpcMgr->ExtractGearTemplateToDB(player, sTemplateNpcMgr->sTalentsSpec);
-                    sTemplateNpcMgr->ExtractGlyphsTemplateToDB(player, sTemplateNpcMgr->sTalentsSpec);
-                    CloseGossipMenuFor(player);
-                    break;
-                }
             }
 
             switch (action)
@@ -674,47 +660,47 @@ public:
 
             // PVE
             case GOSSIP_PVE_GEAR + 1:
-                sTemplateNpcMgr->sTalentsSpec = "Arms-PvE";
+                sTemplateNpcMgr->sTalentsSpec = "Arms-Warrior-PvE";
                 EquipFullTemplateGear(player, sTemplateNpcMgr->sTalentsSpec);
                 CloseGossipMenuFor(player);
                 break;
             case GOSSIP_PVE_GEAR + 2:
-                sTemplateNpcMgr->sTalentsSpec = "Fury-PvE-2H";
+                sTemplateNpcMgr->sTalentsSpec = "Fury-Warrior-PvE-2H";
                 EquipFullTemplateGear(player, sTemplateNpcMgr->sTalentsSpec);
                 CloseGossipMenuFor(player);
                 break;
             case GOSSIP_PVE_GEAR + 3:
-                sTemplateNpcMgr->sTalentsSpec = "Fury-PvE-1H";
+                sTemplateNpcMgr->sTalentsSpec = "Fury-Warrior-PvE-1H";
                 EquipFullTemplateGear(player, sTemplateNpcMgr->sTalentsSpec);
                 CloseGossipMenuFor(player);
                 break;
             case GOSSIP_PVE_GEAR + 4:
-                sTemplateNpcMgr->sTalentsSpec = "Protection-PvE";
+                sTemplateNpcMgr->sTalentsSpec = "Protection-Warrior-PvE";
                 EquipFullTemplateGear(player, sTemplateNpcMgr->sTalentsSpec);
                 CloseGossipMenuFor(player);
                 break;
             case GOSSIP_PVE_GEAR + 5:
-                sTemplateNpcMgr->sTalentsSpec = "Assassination-PvE";
+                sTemplateNpcMgr->sTalentsSpec = "Assassination-Rogue-PvE";
                 EquipFullTemplateGear(player, sTemplateNpcMgr->sTalentsSpec);
                 CloseGossipMenuFor(player);
                 break;
             case GOSSIP_PVE_GEAR + 6:
-                sTemplateNpcMgr->sTalentsSpec = "Combat-PvE";
+                sTemplateNpcMgr->sTalentsSpec = "Combat-Rogue-PvE";
                 EquipFullTemplateGear(player, sTemplateNpcMgr->sTalentsSpec);
                 CloseGossipMenuFor(player);
                 break;
             case GOSSIP_PVE_GEAR + 7:
-                sTemplateNpcMgr->sTalentsSpec = "Subtlety-PvE";
+                sTemplateNpcMgr->sTalentsSpec = "Subtlety-Rogue-PvE";
                 EquipFullTemplateGear(player, sTemplateNpcMgr->sTalentsSpec);
                 CloseGossipMenuFor(player);
                 break;
             case GOSSIP_PVE_GEAR + 8:
-                sTemplateNpcMgr->sTalentsSpec = "Elemental-PvE";
+                sTemplateNpcMgr->sTalentsSpec = "Elemental-Shaman-PvE";
                 EquipFullTemplateGear(player, sTemplateNpcMgr->sTalentsSpec);
                 CloseGossipMenuFor(player);
                 break;
             case GOSSIP_PVE_GEAR + 9:
-                sTemplateNpcMgr->sTalentsSpec = "Enhancement-PvE";
+                sTemplateNpcMgr->sTalentsSpec = "Enhancement-Shaman-PvE";
                 EquipFullTemplateGear(player, sTemplateNpcMgr->sTalentsSpec);
                 CloseGossipMenuFor(player);
                 break;
@@ -962,10 +948,19 @@ public:
 
     static bool HandleExtractTemplateNPCGear(ChatHandler* handler, const char* args)
     {
-        Player *player = handler->getSelectedPlayer();
+        Player* player = handler->getSelectedPlayer();
+        if (!player)
+        {
+            TC_LOG_INFO("server.worldserver", ">>TEMPLATE NPC: No player selected.");
+            return false;
+        }
+
         std::string spec = args;
         sTemplateNpcMgr->sTalentsSpec = spec;
+
         TC_LOG_INFO("server.worldserver", ">>TEMPLATE NPC: GOSSIP_EXTRACT_GEAR selected.");
+        TC_LOG_INFO("server.worldserver", ">>TEMPLATE NPC: Player %s sTalentsSpec: %s", player->GetName().c_str(), spec.c_str());
+
         sTemplateNpcMgr->ExtractGearTemplateToDB(player, sTemplateNpcMgr->sTalentsSpec);
         return true;
     }
@@ -973,19 +968,39 @@ public:
     static bool HandleExtractTemplateNPCGlyphs(ChatHandler* handler, const char* args)
     {
         Player* player = handler->getSelectedPlayer();
+        if (!player)
+        {
+            // Handle the error appropriately, perhaps by sending a message to the admin
+            TC_LOG_INFO("server.worldserver", ">>TEMPLATE NPC: No player selected.");
+            return false;
+        }
+
         std::string spec = args;
         sTemplateNpcMgr->sTalentsSpec = spec;
-        TC_LOG_INFO("server.worldserver", ">>TEMPLATE NPC: GOSSIP_EXTRACT_GEAR selected.");
+
+        TC_LOG_INFO("server.worldserver", ">>TEMPLATE NPC: GOSSIP_EXTRACT_GLYPHS selected.");
+        TC_LOG_INFO("server.worldserver", ">>TEMPLATE NPC: Player %s sTalentsSpec: %s", player->GetName().c_str(), spec.c_str());
         sTemplateNpcMgr->ExtractGlyphsTemplateToDB(player, sTemplateNpcMgr->sTalentsSpec);
+
         return true;
     }
+
 
     static bool HandleExtractTemplateNPCBoth(ChatHandler* handler, const char* args)
     {
         Player* player = handler->getSelectedPlayer();
+        if (!player)
+        {
+            TC_LOG_INFO("server.worldserver", ">>TEMPLATE NPC: No player selected.");
+            return false;
+        }
+
         std::string spec = args;
         sTemplateNpcMgr->sTalentsSpec = spec;
-        TC_LOG_INFO("server.worldserver", ">>TEMPLATE NPC: GOSSIP_EXTRACT_GEAR selected.");
+
+        TC_LOG_INFO("server.worldserver", ">>TEMPLATE NPC: GOSSIP_EXTRACT_BOTH selected.");
+        TC_LOG_INFO("server.worldserver", ">>TEMPLATE NPC: Player %s sTalentsSpec: %s", player->GetName().c_str(), spec.c_str());
+
         sTemplateNpcMgr->ExtractGearTemplateToDB(player, sTemplateNpcMgr->sTalentsSpec);
         sTemplateNpcMgr->ExtractGlyphsTemplateToDB(player, sTemplateNpcMgr->sTalentsSpec);
         return true;
