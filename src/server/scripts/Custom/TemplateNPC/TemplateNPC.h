@@ -25,7 +25,6 @@ enum templateSpells
 enum mastery
 {
     MASTERY_WARRIOR = 87500,
-    MASTERY_PALADIN = 87505,
     MASTERY_SHAMAN = 87497,
     MASTERY_MAGE = 86467,
     MASTERY_DRUID = 87491,
