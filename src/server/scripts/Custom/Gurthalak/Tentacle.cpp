@@ -24,7 +24,7 @@ public:
     {
         npc_tentacle_of_the_old_onesAI(Creature* creature) : ScriptedAI(creature) {}
 
-        void IsSummonedBy(Unit* summoner)
+        void IsSummonedBy(Unit* /*summoner*/)
         {
             DoCast(me, 89962, true); // not sniff verified but include all scalings which we need
             DoCast(me, 61783, true); // not sniff verified but include all scalings which we need
