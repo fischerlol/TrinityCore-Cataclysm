@@ -3,6 +3,9 @@
 
 #include "Define.h"
 #include "Player.h"
+#include "Pet.h"
+#include "Log.h"
+#include "WorldSession.h"
 
 enum Spells
 {
@@ -38,8 +41,8 @@ enum mastery
 
 enum ItemsOnLogin
 {
-    VANISHING_POWDER = 64670,
-    VANISHING_POWDER_COUNT = 100,
+    DUST_OF_DISAPPEARANCE = 63388,
+    DUST_OF_DISAPPEARANCE_COUNT = 100,
     THIRTY_SIX_SLOT_BAG = 23162,
     THIRTY_SIX_SLOT_BAG_COUNT = 4,
 };
@@ -88,6 +91,142 @@ enum ShamanGlyphs
     GLYPH_OF_WATER_BREATHING = 58264,
     GLYPH_OF_WATER_WALKING = 58265
 };
+
+enum RogueGlyphs
+{
+    // Prime
+
+
+    // Major
+
+    // Minor
+};
+
+enum HunterGlyphs
+{
+    // Prime
+    GLYPH_OF_AIMED_SHOT = 56869,
+    GLYPH_OF_ARCANE_SHOT = 56870,
+    GLYPH_OF_CHIMERA_SHOT = 63741,
+    GLYPH_OF_DAZZLED_PREY = 56881,
+    GLYPH_OF_EXPLOSIVE_SHOT = 63854,
+    GLYPH_OF_KILL_COMMAND = 56887,
+    GLYPH_OF_KILL_SHOT = 63855,
+    GLYPH_OF_RAPID_FIRE = 56883,
+    GLYPH_OF_SERPENT_STING = 56884,
+    GLYPH_OF_STEADY_SHOT = 56886,
+
+    // Major
+    GLYPH_OF_BEASTIAL_WRATH = 56874,
+    GLYPH_OF_CONCUSSIVE_SHOT = 56873,
+    GLYPH_OF_DETERRENCE = 56875,
+    GLYPH_OF_DISENGAGE = 56876,
+    GLYPH_OF_FREEZING_TRAP = 56877,
+    GLYPH_OF_ICE_TRAP = 56878,
+    GLYPH_OF_IMMOLATION_TRAP = 56880,
+    GLYPH_OF_MASTERS_CALL = 63856,
+    GLYPH_OF_MENDING = 56872,
+    GLYPH_OF_MISDIRECTION = 56879,
+    GLYPH_OF_RAPTOR_STRIKE = 63858,
+    GLYPH_OF_SCATTER_SHOT = 63857,
+    GLYPH_OF_SILENCING_SHOT = 56882,
+    GLYPH_OF_SNAKE_TRAP = 56885,
+    GLYPH_OF_TRAP_LAUNCHER = 56871,
+    GLYPH_OF_WYVERN_STING = 56889,
+
+    // Minor
+    GLYPH_OF_ASPECT_OF_THE_PACK = 58232,
+    GLYPH_OF_FEIGN_DEATH = 58229,
+    GLYPH_OF_LESSER_PROPORTIONS = 58188,
+    GLYPH_OF_REVIVE_PET = 58186,
+    GLYPH_OF_SCARE_BEAST = 58234
+};
+
+enum WarriorGlyphs
+{
+    // Prime
+
+    // Major
+
+    // Minor
+};
+
+void RemoveStarterPets(Player* player)
+{
+    if (player->getClass() != CLASS_HUNTER)
+        return;
+
+    Pet* pet = player->GetPet();
+    if (!pet)
+        return;
+
+    // Define your list of "starter pet" entry IDs.
+    std::set<uint32> starterPetIDs = { 42717 /* add your starter pet IDs here */ };
+
+    // Check if the pet's entry ID is in the list.
+    if (starterPetIDs.find(pet->GetEntry()) != starterPetIDs.end())
+    {
+        // Remove the pet. Note: The number '1' means "abandon".
+        player->RemovePet(pet, PET_SAVE_AS_DELETED, true);
+        TC_LOG_INFO("server.worldserver", "Removed starter pet from player: %s", player->GetName().c_str());
+    }
+}
+
+void CreatePet(Player* player, Creature* creature, uint32 entry)
+{
+    if (player->getClass() != CLASS_HUNTER)
+        return;
+
+    RemoveStarterPets(player);
+
+    if (player->GetPet())
+        return;
+
+    Creature* creatureTarget = creature->SummonCreature(entry, player->GetPositionX(), player->GetPositionY() + 2, player->GetPositionZ(), player->GetOrientation(), TEMPSUMMON_CORPSE_TIMED_DESPAWN, 500);
+    if (!creatureTarget)
+        return;
+
+    Pet* pet = player->CreateTamedPetFrom(creatureTarget, 0);
+    if (!pet)
+        return;
+
+    // kill original creature
+    creatureTarget->setDeathState(JUST_DIED);
+    creatureTarget->RemoveCorpse();
+    creatureTarget->SetHealth(0);
+
+    // prepare visual effect for levelup
+    pet->SetUInt32Value(UNIT_FIELD_LEVEL, player->getLevel() - 1);
+    pet->GetMap()->AddToMap(pet->ToCreature());
+
+    // visual effect for levelup
+    pet->SetUInt32Value(UNIT_FIELD_LEVEL, player->getLevel());
+
+    if (!pet->InitStatsForLevel(player->getLevel()))
+        TC_LOG_INFO("server.worldserver", "Pet Create fail: No init stats for pet with entry %u", entry);
+
+    pet->UpdateAllStats();
+    player->SetMinion(pet, true);
+    pet->SetObjectScale(1);
+    TC_LOG_INFO("server.worldserver", "Custom scale set for pet: %f", pet->GetObjectScale());  // Log scale for debugging
+    pet->SavePetToDB(PET_SAVE_CURRENT_STATE);
+    pet->InitTalentForLevel();
+    player->PetSpellInitialize();
+}
+
+void AddDust(Player* player)
+{
+    uint32 currentItemCount = player->GetItemCount(DUST_OF_DISAPPEARANCE, true);
+    uint32 itemsToAdd = 0;
+
+    if (currentItemCount < DUST_OF_DISAPPEARANCE_COUNT)
+    {
+        itemsToAdd = DUST_OF_DISAPPEARANCE_COUNT - currentItemCount;
+        player->AddItem(DUST_OF_DISAPPEARANCE, itemsToAdd);
+    }
+    return; 
+}
+
 
 void AddBags(Player* player)
 {
@@ -171,6 +310,39 @@ static void LearnGlyphs(Player* player)
         player->LearnSpell(GLYPH_OF_WINDFURY_WEAPON, false);
         break;
     case CLASS_HUNTER:
+        player->LearnSpell(MASTERY_HUNTER, false);
+        player->LearnSpell(MAIL_SPECIALIZATION, false);
+        player->LearnSpell(GLYPH_OF_AIMED_SHOT, false);
+        player->LearnSpell(GLYPH_OF_ARCANE_SHOT, false);
+        player->LearnSpell(GLYPH_OF_CHIMERA_SHOT, false);
+        player->LearnSpell(GLYPH_OF_DAZZLED_PREY, false);
+        player->LearnSpell(GLYPH_OF_EXPLOSIVE_SHOT, false);
+        player->LearnSpell(GLYPH_OF_KILL_COMMAND, false);
+        player->LearnSpell(GLYPH_OF_KILL_SHOT, false);
+        player->LearnSpell(GLYPH_OF_RAPID_FIRE, false);
+        player->LearnSpell(GLYPH_OF_SERPENT_STING, false);
+        player->LearnSpell(GLYPH_OF_STEADY_SHOT, false);
+        player->LearnSpell(GLYPH_OF_BEASTIAL_WRATH, false);
+        player->LearnSpell(GLYPH_OF_CONCUSSIVE_SHOT, false);
+        player->LearnSpell(GLYPH_OF_DETERRENCE, false);
+        player->LearnSpell(GLYPH_OF_DISENGAGE, false);
+        player->LearnSpell(GLYPH_OF_FREEZING_TRAP, false);
+        player->LearnSpell(GLYPH_OF_ICE_TRAP, false);
+        player->LearnSpell(GLYPH_OF_IMMOLATION_TRAP, false);
+        player->LearnSpell(GLYPH_OF_MASTERS_CALL, false);
+        player->LearnSpell(GLYPH_OF_MENDING, false);
+        player->LearnSpell(GLYPH_OF_MISDIRECTION, false);
+        player->LearnSpell(GLYPH_OF_RAPTOR_STRIKE, false);
+        player->LearnSpell(GLYPH_OF_SCATTER_SHOT, false);
+        player->LearnSpell(GLYPH_OF_SILENCING_SHOT, false);
+        player->LearnSpell(GLYPH_OF_SNAKE_TRAP, false);
+        player->LearnSpell(GLYPH_OF_TRAP_LAUNCHER, false);
+        player->LearnSpell(GLYPH_OF_WYVERN_STING, false);
+        player->LearnSpell(GLYPH_OF_ASPECT_OF_THE_PACK, false);
+        player->LearnSpell(GLYPH_OF_FEIGN_DEATH, false);
+        player->LearnSpell(GLYPH_OF_LESSER_PROPORTIONS, false);
+        player->LearnSpell(GLYPH_OF_REVIVE_PET, false);
+        player->LearnSpell(GLYPH_OF_SCARE_BEAST, false);
         break;
     case CLASS_DRUID:
         break;
@@ -181,7 +353,7 @@ static void LearnGlyphs(Player* player)
     }
 
     AddBags(player);
-    player->AddItem(VANISHING_POWDER, VANISHING_POWDER_COUNT);
+    AddDust(player);
 
 }
 

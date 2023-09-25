@@ -20,6 +20,7 @@ enum GossipId
     GOSSIP_PVP_GEAR = 100,
     GOSSIP_PVE_GEAR = 200,
     GOSSIP_EXTRACT_GEAR = 300,
+    GOSSIP_HUNTER_PET = 400
 };
 
 void sTemplateNPC::LearnPlateMailSpells(Player* player)
@@ -591,6 +592,11 @@ public:
             ClearGossipMenuFor(player);
             AddGossipItemFor(player, GOSSIP_ICON_CHAT, "|cff00ff00|TInterface\\icons\\achievement_featsofstrength_gladiator_08:40|t|r Cataclysmic Gladiator Gear (Season 11)", GOSSIP_SENDER_MAIN, GOSSIP_PVP_GEAR);
             AddGossipItemFor(player, GOSSIP_ICON_CHAT, "|cff00ff00|TInterface\\icons\\achievment_boss_madnessofdeathwing:40|t|r Best in Slot Raid Gear (T13)", GOSSIP_SENDER_MAIN, GOSSIP_PVE_GEAR);
+            if (player->getClass() == CLASS_HUNTER && player->HasSpell(MASTERY_HUNTER))
+            {
+                AddGossipItemFor(player, GOSSIP_ICON_CHAT, "|cff00ff00|TInterface\\icons\\ability_hunter_pet_spider:40|t|r Hunter Pets", GOSSIP_SENDER_MAIN, GOSSIP_HUNTER_PET);
+            }
+             
             SendGossipMenuFor(player, 55002, me->GetGUID());
             return true;
         }
@@ -599,6 +605,8 @@ public:
         {
             uint32 sender = player->PlayerTalkClass->GetGossipOptionSender(uiAction);
             uint32 action = player->PlayerTalkClass->GetGossipOptionAction(uiAction);
+
+            Creature* creature = me;
 
             TC_LOG_INFO("server.worldserver", ">>TEMPLATE NPC: GossipSelect() called.");
             TC_LOG_INFO("server.worldserver", "Action: %d, Sender: %d", action, sender);
@@ -623,37 +631,104 @@ public:
                 AddPvEOptionsForClass(player);
                 SendGossipMenuFor(player, 55002, me->GetGUID());
             }
-
+            else if (action == GOSSIP_HUNTER_PET)
+            {
+                TC_LOG_INFO("server.worldserver", ">>TEMPLATE NPC: GOSSIP_HUNTER_PET selected.");
+                ClearGossipMenuFor(player);
+                AddPetOptionsForHunter(player);
+                SendGossipMenuFor(player, 55002, me->GetGUID());
+            }
+            
             switch (action)
             {
             // PVP
             case GOSSIP_PVP_GEAR + 1:
-                sTemplateNpcMgr->sTalentsSpec = "Arms-PvP";
+                sTemplateNpcMgr->sTalentsSpec = "Arms-Warrior-PvP";
                 EquipFullTemplateGear(player, sTemplateNpcMgr->sTalentsSpec);
                 CloseGossipMenuFor(player);
                 break;
             case GOSSIP_PVP_GEAR + 2:
-                sTemplateNpcMgr->sTalentsSpec = "Fury-PvP";
+                sTemplateNpcMgr->sTalentsSpec = "Fury-Warrior-PvP";
                 EquipFullTemplateGear(player, sTemplateNpcMgr->sTalentsSpec);
                 CloseGossipMenuFor(player);
                 break;
             case GOSSIP_PVP_GEAR + 3:
-                sTemplateNpcMgr->sTalentsSpec = "Protection-PvP";
+                sTemplateNpcMgr->sTalentsSpec = "Protection-Warrior-PvP";
                 EquipFullTemplateGear(player, sTemplateNpcMgr->sTalentsSpec);
                 CloseGossipMenuFor(player);
                 break;
             case GOSSIP_PVP_GEAR + 4:
-                sTemplateNpcMgr->sTalentsSpec = "Assassination-PvP";
+                sTemplateNpcMgr->sTalentsSpec = "Assassination-Rogue-PvP";
                 EquipFullTemplateGear(player, sTemplateNpcMgr->sTalentsSpec);
                 CloseGossipMenuFor(player);
                 break;
             case GOSSIP_PVP_GEAR + 5:
-                sTemplateNpcMgr->sTalentsSpec = "Combat-PvP";
+                sTemplateNpcMgr->sTalentsSpec = "Combat-Rogue-PvP";
                 EquipFullTemplateGear(player, sTemplateNpcMgr->sTalentsSpec);
                 CloseGossipMenuFor(player);
                 break;
             case GOSSIP_PVP_GEAR + 6:
-                sTemplateNpcMgr->sTalentsSpec = "Subtlety-PvP";
+                sTemplateNpcMgr->sTalentsSpec = "Subtlety-Rogue-PvP";
+                EquipFullTemplateGear(player, sTemplateNpcMgr->sTalentsSpec);
+                CloseGossipMenuFor(player);
+                break;
+            case GOSSIP_PVP_GEAR + 7:
+                sTemplateNpcMgr->sTalentsSpec = "Elemental-Shaman-PvP";
+                EquipFullTemplateGear(player, sTemplateNpcMgr->sTalentsSpec);
+                CloseGossipMenuFor(player);
+                break;
+            case GOSSIP_PVP_GEAR + 8:
+                sTemplateNpcMgr->sTalentsSpec = "Enhancement-Shaman-PvP";
+                EquipFullTemplateGear(player, sTemplateNpcMgr->sTalentsSpec);
+                CloseGossipMenuFor(player);
+                break;
+            case GOSSIP_PVP_GEAR + 9:
+                sTemplateNpcMgr->sTalentsSpec = "Restoration-Shaman-PvE";
+                EquipFullTemplateGear(player, sTemplateNpcMgr->sTalentsSpec);
+                CloseGossipMenuFor(player);
+                break;
+            case GOSSIP_PVP_GEAR + 10:
+                sTemplateNpcMgr->sTalentsSpec = "Beast-Mastery-Hunter-PvP";
+                EquipFullTemplateGear(player, sTemplateNpcMgr->sTalentsSpec);
+                CloseGossipMenuFor(player);
+                break;
+            case GOSSIP_PVP_GEAR + 11:
+                sTemplateNpcMgr->sTalentsSpec = "Marksmanship-Hunter-PvP";
+                EquipFullTemplateGear(player, sTemplateNpcMgr->sTalentsSpec);
+                CloseGossipMenuFor(player);
+                break;
+            case GOSSIP_PVP_GEAR + 12:
+                sTemplateNpcMgr->sTalentsSpec = "Survival-Hunter-PvP";
+                EquipFullTemplateGear(player, sTemplateNpcMgr->sTalentsSpec);
+                CloseGossipMenuFor(player);
+                break;
+            case GOSSIP_PVP_GEAR + 13:
+                sTemplateNpcMgr->sTalentsSpec = "Arcane-Mage-PvP";
+                EquipFullTemplateGear(player, sTemplateNpcMgr->sTalentsSpec);
+                CloseGossipMenuFor(player);
+                break;
+            case GOSSIP_PVP_GEAR + 14:
+                sTemplateNpcMgr->sTalentsSpec = "Fire-Mage-PvP";
+                EquipFullTemplateGear(player, sTemplateNpcMgr->sTalentsSpec);
+                CloseGossipMenuFor(player);
+                break;
+            case GOSSIP_PVP_GEAR + 15:
+                sTemplateNpcMgr->sTalentsSpec = "Frost-Mage-PvP";
+                EquipFullTemplateGear(player, sTemplateNpcMgr->sTalentsSpec);
+                CloseGossipMenuFor(player);
+                break;
+            case GOSSIP_PVP_GEAR + 16:
+                sTemplateNpcMgr->sTalentsSpec = "Affliction-Warlock-PvP";
+                EquipFullTemplateGear(player, sTemplateNpcMgr->sTalentsSpec);
+                CloseGossipMenuFor(player);
+                break;
+            case GOSSIP_PVP_GEAR + 17:
+                sTemplateNpcMgr->sTalentsSpec = "Demonology-Warlock-PvP";
+                EquipFullTemplateGear(player, sTemplateNpcMgr->sTalentsSpec);
+                CloseGossipMenuFor(player);
+                break;
+            case GOSSIP_PVP_GEAR + 18:
+                sTemplateNpcMgr->sTalentsSpec = "Destruction-Warlock-PvP";
                 EquipFullTemplateGear(player, sTemplateNpcMgr->sTalentsSpec);
                 CloseGossipMenuFor(player);
                 break;
@@ -709,6 +784,62 @@ public:
                 EquipFullTemplateGear(player, sTemplateNpcMgr->sTalentsSpec);
                 CloseGossipMenuFor(player);
                 break;
+            case GOSSIP_PVE_GEAR + 11:
+                sTemplateNpcMgr->sTalentsSpec = "Beast-Mastery-Hunter-PvE";
+                EquipFullTemplateGear(player, sTemplateNpcMgr->sTalentsSpec);
+                CloseGossipMenuFor(player);
+                break;
+            case GOSSIP_PVE_GEAR + 12:
+                sTemplateNpcMgr->sTalentsSpec = "Marksmanship-Hunter-PvE";
+                EquipFullTemplateGear(player, sTemplateNpcMgr->sTalentsSpec);
+                CloseGossipMenuFor(player);
+                break;
+            case GOSSIP_PVE_GEAR + 13:
+                sTemplateNpcMgr->sTalentsSpec = "Survival-Hunter-PvE";
+                EquipFullTemplateGear(player, sTemplateNpcMgr->sTalentsSpec);
+                CloseGossipMenuFor(player);
+                break;
+            case GOSSIP_PVE_GEAR + 14:
+                sTemplateNpcMgr->sTalentsSpec = "Arcane-Mage-PvE";
+                EquipFullTemplateGear(player, sTemplateNpcMgr->sTalentsSpec);
+                CloseGossipMenuFor(player);
+                break;
+            case GOSSIP_PVE_GEAR + 15:
+                sTemplateNpcMgr->sTalentsSpec = "Fire-Mage-PvE";
+                EquipFullTemplateGear(player, sTemplateNpcMgr->sTalentsSpec);
+                CloseGossipMenuFor(player);
+                break;
+            case GOSSIP_PVE_GEAR + 16:
+                sTemplateNpcMgr->sTalentsSpec = "Frost-Mage-PvE";
+                EquipFullTemplateGear(player, sTemplateNpcMgr->sTalentsSpec);
+                CloseGossipMenuFor(player);
+                break;
+            case GOSSIP_PVE_GEAR + 17:
+                sTemplateNpcMgr->sTalentsSpec = "Affliction-Warlock-PvE";
+                EquipFullTemplateGear(player, sTemplateNpcMgr->sTalentsSpec);
+                CloseGossipMenuFor(player);
+                break;
+            case GOSSIP_PVE_GEAR + 18:
+                sTemplateNpcMgr->sTalentsSpec = "Demonology-Warlock-PvE";
+                EquipFullTemplateGear(player, sTemplateNpcMgr->sTalentsSpec);
+                CloseGossipMenuFor(player);
+                break;
+            case GOSSIP_PVE_GEAR + 19:
+                sTemplateNpcMgr->sTalentsSpec = "Destruction-Warlock-PvE";
+                EquipFullTemplateGear(player, sTemplateNpcMgr->sTalentsSpec);
+                CloseGossipMenuFor(player);
+                break;
+
+            // Hunter Pets
+            case GOSSIP_HUNTER_PET + 1:
+                CreatePet(player, creature, 52013); //fox
+                break;
+            case GOSSIP_HUNTER_PET + 2:
+                CreatePet(player, creature, 52011); //shale spider
+                break;
+            case GOSSIP_HUNTER_PET + 3:
+                CreatePet(player, creature, 48155); //sea gull
+                break;
             }
 
             return true;
@@ -734,6 +865,24 @@ public:
                 AddGossipItemFor(player, GOSSIP_ICON_CHAT, "|cff00ff00|TInterface\\icons\\Spell_Nature_Lightning:40|t|r |cffff0000PvP|r / Elemental", GOSSIP_SENDER_MAIN, GOSSIP_PVP_GEAR + 7);
                 AddGossipItemFor(player, GOSSIP_ICON_CHAT, "|cff00ff00|TInterface\\icons\\Spell_Nature_Lightningshield:40|t|r |cffff0000PvP|r / Enhancement", GOSSIP_SENDER_MAIN, GOSSIP_PVP_GEAR + 8);
                 AddGossipItemFor(player, GOSSIP_ICON_CHAT, "|cff00ff00|TInterface\\icons\\Spell_Nature_Magicimmunity:40|t|r |cffff0000PvP|r / Restoration", GOSSIP_SENDER_MAIN, GOSSIP_PVP_GEAR + 9);
+                AddGossipItemFor(player, GOSSIP_ICON_CHAT, "Back..", GOSSIP_SENDER_MAIN, GOSSIP_MAIN_MENU);
+                break;
+            case CLASS_HUNTER:
+                AddGossipItemFor(player, GOSSIP_ICON_CHAT, "|cff00ff00|TInterface\\icons\\Ability_Hunter_BestialDiscipline:40|t|r |cffff0000PvP|r / Beast Mastery", GOSSIP_SENDER_MAIN, GOSSIP_PVP_GEAR + 10);
+                AddGossipItemFor(player, GOSSIP_ICON_CHAT, "|cff00ff00|TInterface\\icons\\Ability_Hunter_FocusedAim:40|t|r |cffff0000PvP|r / Marksmanship", GOSSIP_SENDER_MAIN, GOSSIP_PVP_GEAR + 11);
+                AddGossipItemFor(player, GOSSIP_ICON_CHAT, "|cff00ff00|TInterface\\icons\\Ability_Hunter_Camouflage:40|t|r |cffff0000PvP|r / Survival", GOSSIP_SENDER_MAIN, GOSSIP_PVP_GEAR + 12);
+                AddGossipItemFor(player, GOSSIP_ICON_CHAT, "Back..", GOSSIP_SENDER_MAIN, GOSSIP_MAIN_MENU);
+                break;
+            case CLASS_MAGE:
+                AddGossipItemFor(player, GOSSIP_ICON_CHAT, "|cff00ff00|TInterface\\icons\\Spell_Holy_MagicalSentry:40|t|r |cffff0000PvP|r / Arcane", GOSSIP_SENDER_MAIN, GOSSIP_PVP_GEAR + 13);
+                AddGossipItemFor(player, GOSSIP_ICON_CHAT, "|cff00ff00|TInterface\\icons\\Spell_Fire_FireBolt02:40|t|r |cffff0000PvP|r / Fire", GOSSIP_SENDER_MAIN, GOSSIP_PVP_GEAR + 14);
+                AddGossipItemFor(player, GOSSIP_ICON_CHAT, "|cff00ff00|TInterface\\icons\\Spell_Frost_FrostBolt02:40|t|r |cffff0000PvP|r / Frost", GOSSIP_SENDER_MAIN, GOSSIP_PVP_GEAR + 15);
+                AddGossipItemFor(player, GOSSIP_ICON_CHAT, "Back..", GOSSIP_SENDER_MAIN, GOSSIP_MAIN_MENU);
+                break;
+            case CLASS_WARLOCK:
+                AddGossipItemFor(player, GOSSIP_ICON_CHAT, "|cff00ff00|TInterface\\icons\\Spell_Shadow_DeathCoil:40|t|r |cffff0000PvP|r / Arcane", GOSSIP_SENDER_MAIN, GOSSIP_PVP_GEAR + 16);
+                AddGossipItemFor(player, GOSSIP_ICON_CHAT, "|cff00ff00|TInterface\\icons\\Spell_Shadow_Metamorphosis:40|t|r |cffff0000PvP|r / Fire", GOSSIP_SENDER_MAIN, GOSSIP_PVP_GEAR + 17);
+                AddGossipItemFor(player, GOSSIP_ICON_CHAT, "|cff00ff00|TInterface\\icons\\Spell_Shadow_RainOfFire:40|t|r |cffff0000PvP|r / Frost", GOSSIP_SENDER_MAIN, GOSSIP_PVP_GEAR + 18);
                 AddGossipItemFor(player, GOSSIP_ICON_CHAT, "Back..", GOSSIP_SENDER_MAIN, GOSSIP_MAIN_MENU);
                 break;
             }
@@ -763,6 +912,45 @@ public:
                 AddGossipItemFor(player, GOSSIP_ICON_CHAT, "|cff00ff00|TInterface\\icons\\Spell_Nature_Magicimmunity:40|t|r |cff00ff00PvE|r / Restoration", GOSSIP_SENDER_MAIN, GOSSIP_PVE_GEAR + 10);
                 AddGossipItemFor(player, GOSSIP_ICON_CHAT, "Back..", GOSSIP_SENDER_MAIN, GOSSIP_MAIN_MENU);
                 break;
+            case CLASS_HUNTER:
+                AddGossipItemFor(player, GOSSIP_ICON_CHAT, "|cff00ff00|TInterface\\icons\\Ability_Hunter_BestialDiscipline:40|t|r |cff00ff00PvE|r / Beast Mastery", GOSSIP_SENDER_MAIN, GOSSIP_PVE_GEAR + 11);
+                AddGossipItemFor(player, GOSSIP_ICON_CHAT, "|cff00ff00|TInterface\\icons\\Ability_Hunter_FocusedAim:40|t|r |cff00ff00PvE|r / Marksmanship", GOSSIP_SENDER_MAIN, GOSSIP_PVE_GEAR + 12);
+                AddGossipItemFor(player, GOSSIP_ICON_CHAT, "|cff00ff00|TInterface\\icons\\Ability_Hunter_Camouflage:40|t|r |cff00ff00PvE|r / Survival", GOSSIP_SENDER_MAIN, GOSSIP_PVE_GEAR + 13);
+                AddGossipItemFor(player, GOSSIP_ICON_CHAT, "Back..", GOSSIP_SENDER_MAIN, GOSSIP_MAIN_MENU);
+                break;
+            case CLASS_MAGE:
+                AddGossipItemFor(player, GOSSIP_ICON_CHAT, "|cff00ff00|TInterface\\icons\\Spell_Holy_MagicalSentry:40|t|r |cff00ff00PvE|r / Affliction", GOSSIP_SENDER_MAIN, GOSSIP_PVE_GEAR + 14);
+                AddGossipItemFor(player, GOSSIP_ICON_CHAT, "|cff00ff00|TInterface\\icons\\Spell_Fire_FireBolt02:40|t|r |cff00ff00PvE|r / Demonology", GOSSIP_SENDER_MAIN, GOSSIP_PVE_GEAR + 15);
+                AddGossipItemFor(player, GOSSIP_ICON_CHAT, "|cff00ff00|TInterface\\icons\\Spell_Frost_FrostBolt02:40|t|r |cff00ff00PvE|r / Destruction", GOSSIP_SENDER_MAIN, GOSSIP_PVE_GEAR + 16);
+                AddGossipItemFor(player, GOSSIP_ICON_CHAT, "Back..", GOSSIP_SENDER_MAIN, GOSSIP_MAIN_MENU);
+                break;
+            case CLASS_WARLOCK:
+                AddGossipItemFor(player, GOSSIP_ICON_CHAT, "|cff00ff00|TInterface\\icons\\Spell_Shadow_DeathCoil:40|t|r |cff00ff00PvE|r / Affliction", GOSSIP_SENDER_MAIN, GOSSIP_PVE_GEAR + 17);
+                AddGossipItemFor(player, GOSSIP_ICON_CHAT, "|cff00ff00|TInterface\\icons\\Spell_Shadow_Metamorphosis:40|t|r |cff00ff00PvE|r / Demonology", GOSSIP_SENDER_MAIN, GOSSIP_PVE_GEAR + 18);
+                AddGossipItemFor(player, GOSSIP_ICON_CHAT, "|cff00ff00|TInterface\\icons\\Spell_Shadow_RainOfFire:40|t|r |cff00ff00PvE|r / Destruction", GOSSIP_SENDER_MAIN, GOSSIP_PVE_GEAR + 19);
+                AddGossipItemFor(player, GOSSIP_ICON_CHAT, "Back..", GOSSIP_SENDER_MAIN, GOSSIP_MAIN_MENU);
+                break;
+            }
+            SendGossipMenuFor(player, 55002, me->GetGUID());
+        }
+
+        void AddPetOptionsForHunter(Player* player)
+        {
+            switch (player->getClass())
+            {
+            case CLASS_HUNTER:
+                if (player->HasSpell(53270)) // beast mastery
+                {
+                    AddGossipItemFor(player, GOSSIP_ICON_CHAT, "Shale Spider", GOSSIP_SENDER_MAIN, GOSSIP_HUNTER_PET + 1);
+                }
+                else
+                { 
+                    AddGossipItemFor(player, GOSSIP_ICON_CHAT, "Fox", GOSSIP_SENDER_MAIN, GOSSIP_HUNTER_PET + 2);
+                    AddGossipItemFor(player, GOSSIP_ICON_CHAT, "Sea Gull", GOSSIP_SENDER_MAIN, GOSSIP_HUNTER_PET + 3);
+                    AddGossipItemFor(player, GOSSIP_ICON_CHAT, "Back..", GOSSIP_SENDER_MAIN, GOSSIP_MAIN_MENU);
+                }
+                break;
+               
             }
             SendGossipMenuFor(player, 55002, me->GetGUID());
         }
