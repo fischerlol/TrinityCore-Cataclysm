@@ -16,14 +16,18 @@
  */
 
 // This is where scripts' loading functions should be declared:
-void AddSC_CustomPlayerScript();
+void AddSC_ScalePetOnLogin();
 void AddSC_TemplateNPC();
+void AddSC_KirilFuryOfBeastsProc();
 void AddSC_npc_tentacle_of_the_old_ones();
+void AddSC_OnLoginPlayerScripts();
 // The name of this function should match:
 // void Add${NameOfDirectory}Scripts()
 void AddCustomScripts()
 {
-    AddSC_CustomPlayerScript();
+    AddSC_ScalePetOnLogin();
     AddSC_TemplateNPC();
+    AddSC_KirilFuryOfBeastsProc();
+    AddSC_OnLoginPlayerScripts();
     AddSC_npc_tentacle_of_the_old_ones();
 }
