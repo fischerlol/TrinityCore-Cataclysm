@@ -3,10 +3,10 @@
 #include "ObjectAccessor.h"
 #include <unordered_map>
 
-class CustomPlayerScript : public WorldScript
+class KirilFuryOfBeastsProc : public WorldScript
 {
 public:
-    CustomPlayerScript() : WorldScript("CustomPlayerScript") {}
+    KirilFuryOfBeastsProc() : WorldScript("KirilFuryOfBeastsProc") {}
 
     void OnUpdate(uint32 /*diff*/) override
     {
@@ -48,7 +48,7 @@ public:
     }
 };
 
-void AddSC_CustomPlayerScript()
+void AddSC_KirilFuryOfBeastsProc()
 {
-    new CustomPlayerScript();
+    new KirilFuryOfBeastsProc();
 }
