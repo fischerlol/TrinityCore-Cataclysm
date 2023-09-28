@@ -34,6 +34,7 @@
 #include "SpellHistory.h"
 #include "SpellMgr.h"
 #include "SpellScript.h"
+#include "Log.h"
 
 // Generic script for handling item dummy effects which trigger another spell.
 class spell_item_trigger_spell : public SpellScriptLoader
@@ -5174,6 +5175,42 @@ private:
     std::array<uint32, 3> _procSpellIds;
 };
 
+enum Tarecgosa
+{
+    SPELL_WRATH_OF_TERECGOSA_PROC = 101085,
+};
+
+class spell_wrath_of_tarecgosa : public AuraScript
+{
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        if(eventInfo.GetDamageInfo()->GetDamageType() != SPELL_DIRECT_DAMAGE)
+            return false;
+
+        return true;
+    }
+
+    void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+    {
+        if (Unit* caster = eventInfo.GetActor())
+        {
+            if (Unit* target = eventInfo.GetActionTarget())
+            {
+                int32 damage = eventInfo.GetDamageInfo()->GetDamage();
+                CastSpellExtraArgs args(aurEff);
+                args.AddSpellBP0(damage);
+                caster->CastSpell(target, SPELL_WRATH_OF_TERECGOSA_PROC, args);
+            }
+        }
+    }
+
+    void Register() override
+    {
+        DoCheckProc.Register(&spell_wrath_of_tarecgosa::CheckProc);
+        OnEffectProc.Register(&spell_wrath_of_tarecgosa::HandleProc, EFFECT_0, SPELL_AURA_PROC_TRIGGER_SPELL_COPY);
+    }
+};
+
 void AddSC_item_spell_scripts()
 {
     // 23074 Arcanite Dragonling
@@ -5314,4 +5351,5 @@ void AddSC_item_spell_scripts()
     RegisterSpellScriptWithArgs(spell_item_dragon_soul_proc_agi_melee_1h_axe, "spell_item_nokaled_the_elements_of_death_lfr", NoKaledProcSpellIdsLFR);
     RegisterSpellScriptWithArgs(spell_item_dragon_soul_proc_agi_melee_1h_axe, "spell_item_nokaled_the_elements_of_death_normal", NoKaledProcSpellIdsNormal);
     RegisterSpellScriptWithArgs(spell_item_dragon_soul_proc_agi_melee_1h_axe, "spell_item_nokaled_the_elements_of_death_heroic", NoKaledProcSpellIdsHeroic);
+    RegisterSpellScript(spell_wrath_of_tarecgosa);
 }
