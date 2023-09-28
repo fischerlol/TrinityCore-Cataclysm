@@ -21,6 +21,7 @@ void AddSC_TemplateNPC();
 void AddSC_KirilFuryOfBeastsProc();
 void AddSC_npc_tentacle_of_the_old_ones();
 void AddSC_OnLoginPlayerScripts();
+void AddSC_CamouflageSpellCheck();
 // The name of this function should match:
 // void Add${NameOfDirectory}Scripts()
 void AddCustomScripts()
@@ -29,5 +30,6 @@ void AddCustomScripts()
     AddSC_TemplateNPC();
     AddSC_KirilFuryOfBeastsProc();
     AddSC_OnLoginPlayerScripts();
+    AddSC_CamouflageSpellCheck();
     AddSC_npc_tentacle_of_the_old_ones();
 }
