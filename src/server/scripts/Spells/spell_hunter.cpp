@@ -29,6 +29,7 @@
 #include "SpellHistory.h"
 #include "SpellMgr.h"
 #include "SpellScript.h"
+#include "Log.h"
 
 enum HunterSpells
 {
@@ -1031,34 +1032,9 @@ class spell_hun_camouflage_duration : public AuraScript
     }
 
     void AfterRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
-    {
+    {  
         GetTarget()->RemoveAurasDueToSpell(SPELL_HUNTER_CAMOUFLAGE_PERIODIC);
         GetTarget()->RemoveAurasDueToSpell(SPELL_HUNTER_CAMOUFLAGE_PERIODIC_TRIGGERED);
-    }
-
-    void Register() override
-    {
-        AfterEffectApply.Register(&spell_hun_camouflage_duration::AfterApply, EFFECT_0, SPELL_AURA_INTERFERE_TARGETTING, AURA_EFFECT_HANDLE_REAL);
-        AfterEffectRemove.Register(&spell_hun_camouflage_duration::AfterRemove, EFFECT_0, SPELL_AURA_INTERFERE_TARGETTING, AURA_EFFECT_HANDLE_REAL);
-    }
-};
-
-// 80325 - Camouflage
-class spell_hun_camouflage_triggered : public AuraScript
-{
-    bool Validate(SpellInfo const* /*spellInfo*/) override
-    {
-        return ValidateSpellInfo(
-            {
-                SPELL_HUNTER_CAMOUFLAGE_PERIODIC,
-                SPELL_HUNTER_CAMOUFLAGE_DURATION
-            });
-    }
-
-    void AfterRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
-    {
-        GetTarget()->RemoveAurasDueToSpell(SPELL_HUNTER_CAMOUFLAGE_PERIODIC);
-        GetTarget()->RemoveAurasDueToSpell(SPELL_HUNTER_CAMOUFLAGE_DURATION);
 
         if (Player* player = GetTarget()->ToPlayer())
         {
@@ -1070,9 +1046,11 @@ class spell_hun_camouflage_triggered : public AuraScript
         }
     }
 
+
     void Register() override
     {
-        AfterEffectRemove.Register(&spell_hun_camouflage_triggered::AfterRemove, EFFECT_0, SPELL_AURA_MOD_STEALTH, AURA_EFFECT_HANDLE_REAL);
+        AfterEffectApply.Register(&spell_hun_camouflage_duration::AfterApply, EFFECT_0, SPELL_AURA_INTERFERE_TARGETTING, AURA_EFFECT_HANDLE_REAL);
+        AfterEffectRemove.Register(&spell_hun_camouflage_duration::AfterRemove, EFFECT_0, SPELL_AURA_INTERFERE_TARGETTING, AURA_EFFECT_HANDLE_REAL);
     }
 };
 
@@ -1442,7 +1420,6 @@ void AddSC_hunter_spell_scripts()
     RegisterSpellScript(spell_hun_ancient_hysteria);
     RegisterSpellScript(spell_hun_camouflage);
     RegisterSpellScript(spell_hun_camouflage_duration);
-    RegisterSpellScript(spell_hun_camouflage_triggered);
     RegisterSpellScript(spell_hun_chimera_shot);
     RegisterSpellScript(spell_hun_cobra_shot);
     RegisterSpellScript(spell_hun_crouching_tiger_hidden_chimera);
