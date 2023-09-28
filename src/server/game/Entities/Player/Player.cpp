@@ -1170,6 +1170,8 @@ void Player::Update(uint32 p_time)
             m_zoneUpdateTimer -= p_time;
     }
 
+    sScriptMgr->OnPlayerUpdate(this, p_time);
+
     // Power regeneration update
     _powerUpdateTimer -= p_time;
     if (IsAlive())
