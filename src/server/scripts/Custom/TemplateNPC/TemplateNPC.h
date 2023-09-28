@@ -20,9 +20,13 @@ enum templateSpells
 {
     PLATE_MAIL = 750,
     MAIL = 8737,
-    PLATE_SPECIALIZATION = 87509,
-    LEATHER_SPECIALIZATION = 87504,
-    MAIL_SPECIALIZATION = 87507,
+    PLATE_SPECIALIZATION_WARRIOR = 87509,
+    PLATE_SPECIALIZATION_PALADIN = 87511,
+    PLATE_SPECIALIZATION_DEATH_KNIGHT = 87510,
+    MAIL_SPECIALIZATION_HUNTER = 87506,
+    MAIL_SPECIALIZATION_SHAMAN = 87507,
+    LEATHER_SPECIALIZATION_ROGUE = 87504,
+    LEATHER_SPECIALIZATION_DRUID = 87505
 };
 
 enum mastery
@@ -41,8 +45,10 @@ enum mastery
 
 enum ItemsOnLogin
 {
-    DUST_OF_DISAPPEARANCE = 63388,
+    DUST_OF_DISAPPEARANCE = 64670,
     DUST_OF_DISAPPEARANCE_COUNT = 100,
+    VANISHING_POWDER = 63388,
+    VANISHING_POWDER_COUNT = 100,
     THIRTY_SIX_SLOT_BAG = 23162,
     THIRTY_SIX_SLOT_BAG_COUNT = 4,
 };
@@ -214,7 +220,7 @@ void CreatePet(Player* player, Creature* creature, uint32 entry)
     player->PetSpellInitialize();
 }
 
-void AddDust(Player* player)
+void AddDustOfDisappearance(Player* player)
 {
     uint32 currentItemCount = player->GetItemCount(DUST_OF_DISAPPEARANCE, true);
     uint32 itemsToAdd = 0;
@@ -225,6 +231,19 @@ void AddDust(Player* player)
         player->AddItem(DUST_OF_DISAPPEARANCE, itemsToAdd);
     }
     return; 
+}
+
+void AddVanishingPowder(Player* player)
+{
+    uint32 currentItemCount = player->GetItemCount(VANISHING_POWDER, true);
+    uint32 itemsToAdd = 0;
+
+    if (currentItemCount < VANISHING_POWDER_COUNT)
+    {
+        itemsToAdd = VANISHING_POWDER_COUNT - currentItemCount;
+        player->AddItem(VANISHING_POWDER, itemsToAdd);
+    }
+    return;
 }
 
 
@@ -253,25 +272,36 @@ static void LearnGlyphs(Player* player)
     switch (player->getClass())
     {
     case CLASS_WARRIOR:
+        AddDustOfDisappearance(player);
         player->LearnSpell(MASTERY_WARRIOR, false);
-        player->LearnSpell(PLATE_SPECIALIZATION, false);
+        player->LearnSpell(PLATE_SPECIALIZATION_WARRIOR, false);
         break;
     case CLASS_PRIEST:
+        AddVanishingPowder(player);
+        player->LearnSpell(MASTERY_PRIEST, false);
         break;
     case CLASS_PALADIN:
+        AddDustOfDisappearance(player);
+        player->LearnSpell(MASTERY_PALADIN, false);
+        player->LearnSpell(PLATE_SPECIALIZATION_PALADIN, false);
         break;
     case CLASS_ROGUE:
+        AddVanishingPowder(player);
         player->LearnSpell(MASTERY_ROGUE, false);
-        player->LearnSpell(LEATHER_SPECIALIZATION, false);
+        player->LearnSpell(LEATHER_SPECIALIZATION_ROGUE, false);
         break;
     case CLASS_DEATH_KNIGHT:
+        AddDustOfDisappearance(player);
+        player->LearnSpell(MASTERY_DEATH_KNIGHT, false);
         break;
     case CLASS_MAGE:
+        AddDustOfDisappearance(player);
+        player->LearnSpell(MASTERY_MAGE, false);
         break;
     case CLASS_SHAMAN:
-        player->LearnSpell(MAIL, false);
+        AddVanishingPowder(player);
         player->LearnSpell(MASTERY_SHAMAN, false);
-        player->LearnSpell(MAIL_SPECIALIZATION, false);
+        player->LearnSpell(MAIL_SPECIALIZATION_SHAMAN, false);
         player->LearnSpell(GLYPH_OF_CHAIN_HEAL, false);
         player->LearnSpell(GLYPH_OF_CHAIN_LIGHTNING, false);
         player->LearnSpell(GLYPH_OF_ELEMENTAL_MASTERY, false);
@@ -310,8 +340,9 @@ static void LearnGlyphs(Player* player)
         player->LearnSpell(GLYPH_OF_WINDFURY_WEAPON, false);
         break;
     case CLASS_HUNTER:
+        AddDustOfDisappearance(player);
         player->LearnSpell(MASTERY_HUNTER, false);
-        player->LearnSpell(MAIL_SPECIALIZATION, false);
+        player->LearnSpell(MAIL_SPECIALIZATION_HUNTER, false);
         player->LearnSpell(GLYPH_OF_AIMED_SHOT, false);
         player->LearnSpell(GLYPH_OF_ARCANE_SHOT, false);
         player->LearnSpell(GLYPH_OF_CHIMERA_SHOT, false);
@@ -345,16 +376,18 @@ static void LearnGlyphs(Player* player)
         player->LearnSpell(GLYPH_OF_SCARE_BEAST, false);
         break;
     case CLASS_DRUID:
+        AddVanishingPowder(player);
+        player->LearnSpell(MASTERY_DRUID, false);
         break;
     case CLASS_WARLOCK:
+        AddVanishingPowder(player);
+        player->LearnSpell(MASTERY_WARLOCK, false);
         break;
     default:
         break;
     }
 
     AddBags(player);
-    AddDust(player);
-
 }
 
 struct TalentTemplate

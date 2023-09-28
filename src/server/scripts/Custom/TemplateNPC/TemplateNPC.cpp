@@ -405,9 +405,9 @@ bool sTemplateNPC::OverwriteTemplate(Player* player, std::string& playerSpecStr)
 
 void sTemplateNPC::ExtractGearTemplateToDB(Player* player, std::string& playerSpecStr)
 {
-    CharacterDatabase.PExecute("DELETE FROM template_npc_human WHERE playerClass = '%s' AND playerSpec = '%s';", GetClassString(player).c_str(), playerSpecStr.c_str());
-    CharacterDatabase.PExecute("DELETE FROM template_npc_alliance WHERE playerClass = '%s' AND playerSpec = '%s';", GetClassString(player).c_str(), playerSpecStr.c_str());
-    CharacterDatabase.PExecute("DELETE FROM template_npc_horde WHERE playerClass = '%s' AND playerSpec = '%s';", GetClassString(player).c_str(), playerSpecStr.c_str());
+    //CharacterDatabase.PExecute("DELETE FROM template_npc_human WHERE playerClass = '%s' AND playerSpec = '%s';", GetClassString(player).c_str(), playerSpecStr.c_str());
+    //CharacterDatabase.PExecute("DELETE FROM template_npc_alliance WHERE playerClass = '%s' AND playerSpec = '%s';", GetClassString(player).c_str(), playerSpecStr.c_str());
+    //CharacterDatabase.PExecute("DELETE FROM template_npc_horde WHERE playerClass = '%s' AND playerSpec = '%s';", GetClassString(player).c_str(), playerSpecStr.c_str());
 
     for (uint8 i = EQUIPMENT_SLOT_START; i < EQUIPMENT_SLOT_END; ++i)
     {
@@ -485,7 +485,7 @@ void sTemplateNPC::ExtractTalentTemplateToDB(Player* player, std::string& player
 
 void sTemplateNPC::ExtractGlyphsTemplateToDB(Player* player, std::string& playerSpecStr)
 {
-    CharacterDatabase.PExecute("DELETE FROM template_npc_glyphs WHERE playerClass = '%s' AND playerSpec = '%s';", GetClassString(player).c_str(), playerSpecStr.c_str());
+    //CharacterDatabase.PExecute("DELETE FROM template_npc_glyphs WHERE playerClass = '%s' AND playerSpec = '%s';", GetClassString(player).c_str(), playerSpecStr.c_str());
 
     QueryResult result = CharacterDatabase.PQuery("SELECT glyph1, glyph2, glyph3, glyph4, glyph5, glyph6, glyph7, glyph8, glyph9 "
         "FROM character_glyphs WHERE guid = '%u' AND talentGroup = '%u';", player->GetGUID(), player->GetActiveSpec());
@@ -732,6 +732,71 @@ public:
                 EquipFullTemplateGear(player, sTemplateNpcMgr->sTalentsSpec);
                 CloseGossipMenuFor(player);
                 break;
+            case GOSSIP_PVP_GEAR + 19:
+                sTemplateNpcMgr->sTalentsSpec = "Holy-Paladin-PvP";
+                EquipFullTemplateGear(player, sTemplateNpcMgr->sTalentsSpec);
+                CloseGossipMenuFor(player);
+                break;
+            case GOSSIP_PVP_GEAR + 20:
+                sTemplateNpcMgr->sTalentsSpec = "Protection-Paladin-PvP";
+                EquipFullTemplateGear(player, sTemplateNpcMgr->sTalentsSpec);
+                CloseGossipMenuFor(player);
+                break;
+            case GOSSIP_PVP_GEAR + 21:
+                sTemplateNpcMgr->sTalentsSpec = "Retribution-Paladin-PvP";
+                EquipFullTemplateGear(player, sTemplateNpcMgr->sTalentsSpec);
+                CloseGossipMenuFor(player);
+                break;
+            case GOSSIP_PVP_GEAR + 22:
+                sTemplateNpcMgr->sTalentsSpec = "Balance-Druid-PvP";
+                EquipFullTemplateGear(player, sTemplateNpcMgr->sTalentsSpec);
+                CloseGossipMenuFor(player);
+                break;
+            case GOSSIP_PVP_GEAR + 23:
+                sTemplateNpcMgr->sTalentsSpec = "Feral-Druid-PvP";
+                EquipFullTemplateGear(player, sTemplateNpcMgr->sTalentsSpec);
+                CloseGossipMenuFor(player);
+                break;
+            case GOSSIP_PVP_GEAR + 31:
+                sTemplateNpcMgr->sTalentsSpec = "Guardian-Druid-PvP";
+                EquipFullTemplateGear(player, sTemplateNpcMgr->sTalentsSpec);
+                CloseGossipMenuFor(player);
+                break;
+            case GOSSIP_PVP_GEAR + 24:
+                sTemplateNpcMgr->sTalentsSpec = "Restoration-Druid-PvP";
+                EquipFullTemplateGear(player, sTemplateNpcMgr->sTalentsSpec);
+                CloseGossipMenuFor(player);
+                break;
+            case GOSSIP_PVP_GEAR + 25:
+                sTemplateNpcMgr->sTalentsSpec = "Blood-Death-Knight-PvP";
+                EquipFullTemplateGear(player, sTemplateNpcMgr->sTalentsSpec);
+                CloseGossipMenuFor(player);
+                break;
+            case GOSSIP_PVP_GEAR + 26:
+                sTemplateNpcMgr->sTalentsSpec = "Frost-Death-Knight-PvP";
+                EquipFullTemplateGear(player, sTemplateNpcMgr->sTalentsSpec);
+                CloseGossipMenuFor(player);
+                break;
+            case GOSSIP_PVP_GEAR + 27:
+                sTemplateNpcMgr->sTalentsSpec = "Unholy-Death-Knight-PvP";
+                EquipFullTemplateGear(player, sTemplateNpcMgr->sTalentsSpec);
+                CloseGossipMenuFor(player);
+                break;
+            case GOSSIP_PVP_GEAR + 28:
+                sTemplateNpcMgr->sTalentsSpec = "Discipline-Priest-PvP";
+                EquipFullTemplateGear(player, sTemplateNpcMgr->sTalentsSpec);
+                CloseGossipMenuFor(player);
+                break;
+            case GOSSIP_PVP_GEAR + 29:
+                sTemplateNpcMgr->sTalentsSpec = "Holy-Priest-PvP";
+                EquipFullTemplateGear(player, sTemplateNpcMgr->sTalentsSpec);
+                CloseGossipMenuFor(player);
+                break;
+            case GOSSIP_PVP_GEAR + 30:
+                sTemplateNpcMgr->sTalentsSpec = "Shadow-Priest-PvP";
+                EquipFullTemplateGear(player, sTemplateNpcMgr->sTalentsSpec);
+                CloseGossipMenuFor(player);
+                break;
 
             // PVE
             case GOSSIP_PVE_GEAR + 1:
@@ -829,6 +894,71 @@ public:
                 EquipFullTemplateGear(player, sTemplateNpcMgr->sTalentsSpec);
                 CloseGossipMenuFor(player);
                 break;
+            case GOSSIP_PVE_GEAR + 20:
+                sTemplateNpcMgr->sTalentsSpec = "Holy-Paladin-PvE";
+                EquipFullTemplateGear(player, sTemplateNpcMgr->sTalentsSpec);
+                CloseGossipMenuFor(player);
+                break;
+            case GOSSIP_PVE_GEAR + 21:
+                sTemplateNpcMgr->sTalentsSpec = "Protection-Paladin-PvE";
+                EquipFullTemplateGear(player, sTemplateNpcMgr->sTalentsSpec);
+                CloseGossipMenuFor(player);
+                break;
+            case GOSSIP_PVE_GEAR + 22:
+                sTemplateNpcMgr->sTalentsSpec = "Retribution-Paladin-PvE";
+                EquipFullTemplateGear(player, sTemplateNpcMgr->sTalentsSpec);
+                CloseGossipMenuFor(player);
+                break;
+            case GOSSIP_PVE_GEAR + 23:
+                sTemplateNpcMgr->sTalentsSpec = "Balance-Druid-PvE";
+                EquipFullTemplateGear(player, sTemplateNpcMgr->sTalentsSpec);
+                CloseGossipMenuFor(player);
+                break;
+            case GOSSIP_PVE_GEAR + 24:
+                sTemplateNpcMgr->sTalentsSpec = "Feral-Druid-PvE";
+                EquipFullTemplateGear(player, sTemplateNpcMgr->sTalentsSpec);
+                CloseGossipMenuFor(player);
+                break;
+            case GOSSIP_PVE_GEAR + 32:
+                sTemplateNpcMgr->sTalentsSpec = "Guardian-Druid-PvE";
+                EquipFullTemplateGear(player, sTemplateNpcMgr->sTalentsSpec);
+                CloseGossipMenuFor(player);
+                break;
+            case GOSSIP_PVE_GEAR + 25:
+                sTemplateNpcMgr->sTalentsSpec = "Restoration-Druid-PvE";
+                EquipFullTemplateGear(player, sTemplateNpcMgr->sTalentsSpec);
+                CloseGossipMenuFor(player);
+                break;
+            case GOSSIP_PVE_GEAR + 26:
+                sTemplateNpcMgr->sTalentsSpec = "Blood-Death-Knight-PvE";
+                EquipFullTemplateGear(player, sTemplateNpcMgr->sTalentsSpec);
+                CloseGossipMenuFor(player);
+                break;
+            case GOSSIP_PVE_GEAR + 27:
+                sTemplateNpcMgr->sTalentsSpec = "Frost-Death-Knight-PvE";
+                EquipFullTemplateGear(player, sTemplateNpcMgr->sTalentsSpec);
+                CloseGossipMenuFor(player);
+                break;
+            case GOSSIP_PVE_GEAR + 28:
+                sTemplateNpcMgr->sTalentsSpec = "Unholy-Death-Knight-PvE";
+                EquipFullTemplateGear(player, sTemplateNpcMgr->sTalentsSpec);
+                CloseGossipMenuFor(player);
+                break;
+            case GOSSIP_PVE_GEAR + 29:
+                sTemplateNpcMgr->sTalentsSpec = "Discipline-Priest-PvE";
+                EquipFullTemplateGear(player, sTemplateNpcMgr->sTalentsSpec);
+                CloseGossipMenuFor(player);
+                break;
+            case GOSSIP_PVE_GEAR + 30:
+                sTemplateNpcMgr->sTalentsSpec = "Holy-Priest-PvE";
+                EquipFullTemplateGear(player, sTemplateNpcMgr->sTalentsSpec);
+                CloseGossipMenuFor(player);
+                break;
+            case GOSSIP_PVE_GEAR + 31:
+                sTemplateNpcMgr->sTalentsSpec = "Shadow-Priest-PvE";
+                EquipFullTemplateGear(player, sTemplateNpcMgr->sTalentsSpec);
+                CloseGossipMenuFor(player);
+                break;
 
             // Hunter Pets
             case GOSSIP_HUNTER_PET + 1:
@@ -880,9 +1010,34 @@ public:
                 AddGossipItemFor(player, GOSSIP_ICON_CHAT, "Back..", GOSSIP_SENDER_MAIN, GOSSIP_MAIN_MENU);
                 break;
             case CLASS_WARLOCK:
-                AddGossipItemFor(player, GOSSIP_ICON_CHAT, "|cff00ff00|TInterface\\icons\\Spell_Shadow_DeathCoil:40|t|r |cffff0000PvP|r / Arcane", GOSSIP_SENDER_MAIN, GOSSIP_PVP_GEAR + 16);
-                AddGossipItemFor(player, GOSSIP_ICON_CHAT, "|cff00ff00|TInterface\\icons\\Spell_Shadow_Metamorphosis:40|t|r |cffff0000PvP|r / Fire", GOSSIP_SENDER_MAIN, GOSSIP_PVP_GEAR + 17);
-                AddGossipItemFor(player, GOSSIP_ICON_CHAT, "|cff00ff00|TInterface\\icons\\Spell_Shadow_RainOfFire:40|t|r |cffff0000PvP|r / Frost", GOSSIP_SENDER_MAIN, GOSSIP_PVP_GEAR + 18);
+                AddGossipItemFor(player, GOSSIP_ICON_CHAT, "|cff00ff00|TInterface\\icons\\Spell_Shadow_DeathCoil:40|t|r |cffff0000PvP|r / Affliction", GOSSIP_SENDER_MAIN, GOSSIP_PVP_GEAR + 16);
+                AddGossipItemFor(player, GOSSIP_ICON_CHAT, "|cff00ff00|TInterface\\icons\\Spell_Shadow_Metamorphosis:40|t|r |cffff0000PvP|r / Demonology", GOSSIP_SENDER_MAIN, GOSSIP_PVP_GEAR + 17);
+                AddGossipItemFor(player, GOSSIP_ICON_CHAT, "|cff00ff00|TInterface\\icons\\Spell_Shadow_RainOfFire:40|t|r |cffff0000PvP|r / Destruction", GOSSIP_SENDER_MAIN, GOSSIP_PVP_GEAR + 18);
+                AddGossipItemFor(player, GOSSIP_ICON_CHAT, "Back..", GOSSIP_SENDER_MAIN, GOSSIP_MAIN_MENU);
+                break;
+            case CLASS_PALADIN:
+                AddGossipItemFor(player, GOSSIP_ICON_CHAT, "|cff00ff00|TInterface\\icons\\Spell_Holy_HolyBolt:40|t|r |cffff0000PvP|r / Holy", GOSSIP_SENDER_MAIN, GOSSIP_PVP_GEAR + 19);
+                AddGossipItemFor(player, GOSSIP_ICON_CHAT, "|cff00ff00|TInterface\\icons\\Ability_Paladin_ShieldoftheTemplar:40|t|r |cffff0000PvP|r / Protection", GOSSIP_SENDER_MAIN, GOSSIP_PVP_GEAR + 20);
+                AddGossipItemFor(player, GOSSIP_ICON_CHAT, "|cff00ff00|TInterface\\icons\\Spell_Holy_AuraOfLight:40|t|r |cffff0000PvP|r / Retribution", GOSSIP_SENDER_MAIN, GOSSIP_PVP_GEAR + 21);
+                AddGossipItemFor(player, GOSSIP_ICON_CHAT, "Back..", GOSSIP_SENDER_MAIN, GOSSIP_MAIN_MENU);
+                break;
+            case CLASS_DRUID:
+                AddGossipItemFor(player, GOSSIP_ICON_CHAT, "|cff00ff00|TInterface\\icons\\Spell_Nature_StarFall:40|t|r |cffff0000PvP|r / Balance", GOSSIP_SENDER_MAIN, GOSSIP_PVP_GEAR + 22);
+                AddGossipItemFor(player, GOSSIP_ICON_CHAT, "|cff00ff00|TInterface\\icons\\Ability_Racial_BearForm:40|t|r |cffff0000PvP|r / Feral", GOSSIP_SENDER_MAIN, GOSSIP_PVP_GEAR + 23);
+                AddGossipItemFor(player, GOSSIP_ICON_CHAT, "|cff00ff00|TInterface\\icons\\Ability_Racial_BearForm:40|t|r |cffff0000PvP|r / Guardian", GOSSIP_SENDER_MAIN, GOSSIP_PVP_GEAR + 23);
+                AddGossipItemFor(player, GOSSIP_ICON_CHAT, "|cff00ff00|TInterface\\icons\\Spell_Nature_HealingTouch:40|t|r |cffff0000PvP|r / Restoration", GOSSIP_SENDER_MAIN, GOSSIP_PVP_GEAR + 24);
+                AddGossipItemFor(player, GOSSIP_ICON_CHAT, "Back..", GOSSIP_SENDER_MAIN, GOSSIP_MAIN_MENU);
+                break;
+            case CLASS_DEATH_KNIGHT:
+                AddGossipItemFor(player, GOSSIP_ICON_CHAT, "|cff00ff00|TInterface\\icons\\Spell_Deathknight_BloodPresence:40|t|r |cffff0000PvP|r / Blood", GOSSIP_SENDER_MAIN, GOSSIP_PVP_GEAR + 25);
+                AddGossipItemFor(player, GOSSIP_ICON_CHAT, "|cff00ff00|TInterface\\icons\\Spell_Deathknight_FrostPresence:40|t|r |cffff0000PvP|r / Frost", GOSSIP_SENDER_MAIN, GOSSIP_PVP_GEAR + 26);
+                AddGossipItemFor(player, GOSSIP_ICON_CHAT, "|cff00ff00|TInterface\\icons\\Spell_Deathknight_UnholyPresence:40|t|r |cffff0000PvP|r / Unholy", GOSSIP_SENDER_MAIN, GOSSIP_PVP_GEAR + 27);
+                AddGossipItemFor(player, GOSSIP_ICON_CHAT, "Back..", GOSSIP_SENDER_MAIN, GOSSIP_MAIN_MENU);
+                break;
+            case CLASS_PRIEST:
+                AddGossipItemFor(player, GOSSIP_ICON_CHAT, "|cff00ff00|TInterface\\icons\\Spell_Holy_PowerWordShield:40|t|r |cffff0000PvP|r / Discipline", GOSSIP_SENDER_MAIN, GOSSIP_PVP_GEAR + 28);
+                AddGossipItemFor(player, GOSSIP_ICON_CHAT, "|cff00ff00|TInterface\\icons\\Spell_Holy_GuardianSpirit:40|t|r |cffff0000PvP|r / Holy", GOSSIP_SENDER_MAIN, GOSSIP_PVP_GEAR + 29);
+                AddGossipItemFor(player, GOSSIP_ICON_CHAT, "|cff00ff00|TInterface\\icons\\Spell_Shadow_ShadowWordPain:40|t|r |cffff0000PvP|r / Shadow", GOSSIP_SENDER_MAIN, GOSSIP_PVP_GEAR + 30);
                 AddGossipItemFor(player, GOSSIP_ICON_CHAT, "Back..", GOSSIP_SENDER_MAIN, GOSSIP_MAIN_MENU);
                 break;
             }
@@ -919,15 +1074,40 @@ public:
                 AddGossipItemFor(player, GOSSIP_ICON_CHAT, "Back..", GOSSIP_SENDER_MAIN, GOSSIP_MAIN_MENU);
                 break;
             case CLASS_MAGE:
-                AddGossipItemFor(player, GOSSIP_ICON_CHAT, "|cff00ff00|TInterface\\icons\\Spell_Holy_MagicalSentry:40|t|r |cff00ff00PvE|r / Affliction", GOSSIP_SENDER_MAIN, GOSSIP_PVE_GEAR + 14);
-                AddGossipItemFor(player, GOSSIP_ICON_CHAT, "|cff00ff00|TInterface\\icons\\Spell_Fire_FireBolt02:40|t|r |cff00ff00PvE|r / Demonology", GOSSIP_SENDER_MAIN, GOSSIP_PVE_GEAR + 15);
-                AddGossipItemFor(player, GOSSIP_ICON_CHAT, "|cff00ff00|TInterface\\icons\\Spell_Frost_FrostBolt02:40|t|r |cff00ff00PvE|r / Destruction", GOSSIP_SENDER_MAIN, GOSSIP_PVE_GEAR + 16);
+                AddGossipItemFor(player, GOSSIP_ICON_CHAT, "|cff00ff00|TInterface\\icons\\Spell_Holy_MagicalSentry:40|t|r |cff00ff00PvE|r / Arcane", GOSSIP_SENDER_MAIN, GOSSIP_PVE_GEAR + 14);
+                AddGossipItemFor(player, GOSSIP_ICON_CHAT, "|cff00ff00|TInterface\\icons\\Spell_Fire_FireBolt02:40|t|r |cff00ff00PvE|r / Fire", GOSSIP_SENDER_MAIN, GOSSIP_PVE_GEAR + 15);
+                AddGossipItemFor(player, GOSSIP_ICON_CHAT, "|cff00ff00|TInterface\\icons\\Spell_Frost_FrostBolt02:40|t|r |cff00ff00PvE|r / Frost", GOSSIP_SENDER_MAIN, GOSSIP_PVE_GEAR + 16);
                 AddGossipItemFor(player, GOSSIP_ICON_CHAT, "Back..", GOSSIP_SENDER_MAIN, GOSSIP_MAIN_MENU);
                 break;
             case CLASS_WARLOCK:
                 AddGossipItemFor(player, GOSSIP_ICON_CHAT, "|cff00ff00|TInterface\\icons\\Spell_Shadow_DeathCoil:40|t|r |cff00ff00PvE|r / Affliction", GOSSIP_SENDER_MAIN, GOSSIP_PVE_GEAR + 17);
                 AddGossipItemFor(player, GOSSIP_ICON_CHAT, "|cff00ff00|TInterface\\icons\\Spell_Shadow_Metamorphosis:40|t|r |cff00ff00PvE|r / Demonology", GOSSIP_SENDER_MAIN, GOSSIP_PVE_GEAR + 18);
                 AddGossipItemFor(player, GOSSIP_ICON_CHAT, "|cff00ff00|TInterface\\icons\\Spell_Shadow_RainOfFire:40|t|r |cff00ff00PvE|r / Destruction", GOSSIP_SENDER_MAIN, GOSSIP_PVE_GEAR + 19);
+                AddGossipItemFor(player, GOSSIP_ICON_CHAT, "Back..", GOSSIP_SENDER_MAIN, GOSSIP_MAIN_MENU);
+                break;
+            case CLASS_PALADIN:
+                AddGossipItemFor(player, GOSSIP_ICON_CHAT, "|cff00ff00|TInterface\\icons\\Spell_Holy_HolyBolt:40|t|r |cff00ff00PvE|r / Holy", GOSSIP_SENDER_MAIN, GOSSIP_PVE_GEAR + 20);
+                AddGossipItemFor(player, GOSSIP_ICON_CHAT, "|cff00ff00|TInterface\\icons\\Ability_Paladin_ShieldoftheTemplar:40|t|r |cff00ff00PvE|r / Protection", GOSSIP_SENDER_MAIN, GOSSIP_PVE_GEAR + 21);
+                AddGossipItemFor(player, GOSSIP_ICON_CHAT, "|cff00ff00|TInterface\\icons\\Spell_Holy_AuraOfLight:40|t|r |cff00ff00PvE|r / Retribution", GOSSIP_SENDER_MAIN, GOSSIP_PVE_GEAR + 22);
+                AddGossipItemFor(player, GOSSIP_ICON_CHAT, "Back..", GOSSIP_SENDER_MAIN, GOSSIP_MAIN_MENU);
+                break;
+            case CLASS_DRUID:
+                AddGossipItemFor(player, GOSSIP_ICON_CHAT, "|cff00ff00|TInterface\\icons\\Spell_Nature_StarFall:40|t|r |cff00ff00PvE|r / Balance", GOSSIP_SENDER_MAIN, GOSSIP_PVE_GEAR + 23);
+                AddGossipItemFor(player, GOSSIP_ICON_CHAT, "|cff00ff00|TInterface\\icons\\Ability_Racial_BearForm:40|t|r |cff00ff00PvE|r / Feral", GOSSIP_SENDER_MAIN, GOSSIP_PVE_GEAR + 24);
+                AddGossipItemFor(player, GOSSIP_ICON_CHAT, "|cff00ff00|TInterface\\icons\\Ability_Racial_BearForm:40|t|r |cff00ff00PvE|r / Guardian", GOSSIP_SENDER_MAIN, GOSSIP_PVE_GEAR + 32);
+                AddGossipItemFor(player, GOSSIP_ICON_CHAT, "|cff00ff00|TInterface\\icons\\Spell_Nature_HealingTouch:40|t|r |cff00ff00PvE|r / Restoration", GOSSIP_SENDER_MAIN, GOSSIP_PVE_GEAR + 25);
+                AddGossipItemFor(player, GOSSIP_ICON_CHAT, "Back..", GOSSIP_SENDER_MAIN, GOSSIP_MAIN_MENU);
+                break;
+            case CLASS_DEATH_KNIGHT:
+                AddGossipItemFor(player, GOSSIP_ICON_CHAT, "|cff00ff00|TInterface\\icons\\Spell_Deathknight_BloodPresence:40|t|r |cff00ff00PvE|r / Blood", GOSSIP_SENDER_MAIN, GOSSIP_PVE_GEAR + 26);
+                AddGossipItemFor(player, GOSSIP_ICON_CHAT, "|cff00ff00|TInterface\\icons\\Spell_Deathknight_FrostPresence:40|t|r |cff00ff00PvE|r / Frost", GOSSIP_SENDER_MAIN, GOSSIP_PVE_GEAR + 27);
+                AddGossipItemFor(player, GOSSIP_ICON_CHAT, "|cff00ff00|TInterface\\icons\\Spell_Deathknight_UnholyPresence:40|t|r |cff00ff00PvE|r / Unholy", GOSSIP_SENDER_MAIN, GOSSIP_PVE_GEAR + 28);
+                AddGossipItemFor(player, GOSSIP_ICON_CHAT, "Back..", GOSSIP_SENDER_MAIN, GOSSIP_MAIN_MENU);
+                break;
+            case CLASS_PRIEST:
+                AddGossipItemFor(player, GOSSIP_ICON_CHAT, "|cff00ff00|TInterface\\icons\\Spell_Holy_PowerWordShield:40|t|r |cff00ff00PvE|r / Discipline", GOSSIP_SENDER_MAIN, GOSSIP_PVE_GEAR + 29);
+                AddGossipItemFor(player, GOSSIP_ICON_CHAT, "|cff00ff00|TInterface\\icons\\Spell_Holy_GuardianSpirit:40|t|r |cff00ff00PvE|r / Holy", GOSSIP_SENDER_MAIN, GOSSIP_PVE_GEAR + 30);
+                AddGossipItemFor(player, GOSSIP_ICON_CHAT, "|cff00ff00|TInterface\\icons\\Spell_Shadow_ShadowWordPain:40|t|r |cff00ff00PvE|r / Shadow", GOSSIP_SENDER_MAIN, GOSSIP_PVE_GEAR + 31);
                 AddGossipItemFor(player, GOSSIP_ICON_CHAT, "Back..", GOSSIP_SENDER_MAIN, GOSSIP_MAIN_MENU);
                 break;
             }
