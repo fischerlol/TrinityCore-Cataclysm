@@ -2683,6 +2683,19 @@ void SpellMgr::LoadSpellInfoCustomAttributes()
 
         for (uint8 j = 0; j < MAX_SPELL_EFFECTS; ++j)
         {
+            switch (spellInfo->Id)
+            {
+            case 51753: // Camouflage
+                spellInfo->AuraInterruptFlags = SpellAuraInterruptFlags::HostileActionReceived | SpellAuraInterruptFlags::Damage | SpellAuraInterruptFlags::Interacting | SpellAuraInterruptFlags::Mount | SpellAuraInterruptFlags::LeaveWorld;
+                break;
+            case 51755: // Camouflage
+                spellInfo->AuraInterruptFlags = SpellAuraInterruptFlags::HostileActionReceived | SpellAuraInterruptFlags::Damage | SpellAuraInterruptFlags::Interacting | SpellAuraInterruptFlags::Attacking | SpellAuraInterruptFlags::Mount;
+                break;
+            case 80325: // Camouflage
+                spellInfo->AuraInterruptFlags = SpellAuraInterruptFlags::HostileActionReceived | SpellAuraInterruptFlags::Damage | SpellAuraInterruptFlags::Action | SpellAuraInterruptFlags::Moving | SpellAuraInterruptFlags::Interacting | SpellAuraInterruptFlags::Looting | SpellAuraInterruptFlags::Attacking;
+                break;
+            }
+            
             // all bleed effects and spells ignore armor
             if (spellInfo->GetEffectMechanicMask(j) & (1 << MECHANIC_BLEED))
                 spellInfo->AttributesCu |= SPELL_ATTR0_CU_IGNORE_ARMOR;
