@@ -395,6 +395,13 @@ struct TalentTemplate
     std::string    playerClass;
     std::string    playerSpec;
     uint32         talentId;
+    uint32         treeId;
+};
+
+struct TalentTreeId
+{
+    std::string    playerSpec;
+    uint32         treeId;
 };
 
 struct GlyphTemplate
@@ -417,6 +424,7 @@ struct HumanGearTemplate
     uint32         socket3;
     uint32         bonusEnchant;
     uint32         prismaticEnchant;
+    uint32         reforgeId;
 };
 
 struct AllianceGearTemplate
@@ -431,6 +439,7 @@ struct AllianceGearTemplate
     uint32         socket3;
     uint32         bonusEnchant;
     uint32         prismaticEnchant;
+    uint32         reforgeId;
 };
 
 struct HordeGearTemplate
@@ -445,14 +454,21 @@ struct HordeGearTemplate
     uint32         socket3;
     uint32         bonusEnchant;
     uint32         prismaticEnchant;
+    uint32         reforgeId;
 };
 
-typedef std::vector<HumanGearTemplate*> HumanGearContainer;
-typedef std::vector<AllianceGearTemplate*> AllianceGearContainer;
-typedef std::vector<HordeGearTemplate*> HordeGearContainer;
+typedef std::vector<HumanGearTemplate*> HumanGearContainerPvE;
+typedef std::vector<AllianceGearTemplate*> AllianceGearContainerPvE;
+typedef std::vector<HordeGearTemplate*> HordeGearContainerPvE;
+typedef std::vector<HumanGearTemplate*> HumanGearContainerPvP;
+typedef std::vector<AllianceGearTemplate*> AllianceGearContainerPvP;
+typedef std::vector<HordeGearTemplate*> HordeGearContainerPvP;
 
-typedef std::vector<TalentTemplate*> TalentContainer;
-typedef std::vector<GlyphTemplate*> GlyphContainer;
+typedef std::vector<TalentTemplate*> TalentContainerPvE;
+typedef std::vector<TalentTemplate*> TalentContainerPvP;
+typedef std::vector<GlyphTemplate*> GlyphContainerPvE;
+typedef std::vector<GlyphTemplate*> GlyphContainerPvP;
+typedef std::vector<TalentTreeId*> TalentTreeIdContainer;
 
 class sTemplateNPC
 {
@@ -462,38 +478,60 @@ public:
         static sTemplateNPC* instance = new sTemplateNPC();
         return instance;
     }
-    void LoadTalentsContainer();
-    void LoadGlyphsContainer();
+    void LoadTalentsContainerPvE();
+    void LoadTalentsContainerPvP();
+    void LoadTalentTreeId();
+    void LoadGlyphsContainerPvE();
+    void LoadGlyphsContainerPvP();
 
-    void LoadHumanGearContainer();
-    void LoadAllianceGearContainer();
-    void LoadHordeGearContainer();
+    void LoadHumanGearContainerPvE();
+    void LoadAllianceGearContainerPvE();
+    void LoadHordeGearContainerPvE();
+    void LoadHumanGearContainerPvP();
+    void LoadAllianceGearContainerPvP();
+    void LoadHordeGearContainerPvP();
 
     void ApplyGlyph(Player* player, uint8 slot, uint32 glyphID);
     void RemoveAllGlyphs(Player* player);
     void ApplyBonus(Player* player, Item* item, EnchantmentSlot slot, uint32 bonusEntry);
 
     bool OverwriteTemplate(Player* /*player*/, std::string& /*playerSpecStr*/);
-    void ExtractGearTemplateToDB(Player* /*player*/, std::string& /*playerSpecStr*/);
-    void ExtractTalentTemplateToDB(Player* /*player*/, std::string& /*playerSpecStr*/);
-    void ExtractGlyphsTemplateToDB(Player* /*player*/, std::string& /*playerSpecStr*/);
-    bool CanEquipTemplate(Player* /*player*/, std::string& /*playerSpecStr*/);
+    void ExtractGearTemplateToDBPvE(Player* /*player*/, std::string& /*playerSpecStr*/);
+	void ExtractGearTemplateToDBHumanPvP(Player* /*player*/, std::string& /*playerSpecStr*/);
+    void ExtractGearTemplateToDBAlliancePvP(Player* /*player*/, std::string& /*playerSpecStr*/);
+    void ExtractGearTemplateToDBHordePvP(Player* /*player*/, std::string& /*playerSpecStr*/);
+    void ExtractTalentTemplateToDBPvE(Player* /*player*/, std::string& /*playerSpecStr*/);
+    void ExtractTalentTemplateToDBPvP(Player* /*player*/, std::string& /*playerSpecStr*/);
+    void ExtractTalentTreeId(Player* /*player*/, std::string& /*playerSpecStr*/);
+    void ExtractGlyphsTemplateToDBPvE(Player* /*player*/, std::string& /*playerSpecStr*/);
+    void ExtractGlyphsTemplateToDBPvP(Player* /*player*/, std::string& /*playerSpecStr*/);
+    bool CanEquipTemplatePvE(Player* /*player*/, std::string& /*playerSpecStr*/);
+    bool CanEquipTemplatePvP(Player* /*player*/, std::string& /*playerSpecStr*/);
 
     std::string GetClassString(Player* /*player*/);
     std::string sTalentsSpec;
 
-    void LearnTemplateTalents(Player* /*player*/);
-    void LearnTemplateGlyphs(Player* /*player*/);
-    void EquipTemplateGear(Player* /*player*/);
+    void LearnTemplateTalentsPvE(Player* /*player*/);
+    void LearnTemplateTalentsPvP(Player* /*player*/);
+    void LearnTemplateGlyphsPvE(Player* /*player*/);
+    void EquipTemplateGearPvE(Player* /*player*/);
+    void LearnTemplateGlyphsPvP(Player* /*player*/);
+    void EquipTemplateGearPvP(Player* /*player*/);
 
     void LearnPlateMailSpells(Player* /*player*/);
 
-    GlyphContainer m_GlyphContainer;
-    TalentContainer m_TalentContainer;
+    GlyphContainerPvE m_GlyphContainerPvE;
+    GlyphContainerPvP m_GlyphContainerPvP;
+    TalentContainerPvE m_TalentContainerPvE;
+    TalentContainerPvP m_TalentContainerPvP;
+    TalentTreeIdContainer m_TalentTreeIdContainer;
 
-    HumanGearContainer m_HumanGearContainer;
-    AllianceGearContainer m_AllianceGearContainer;
-    HordeGearContainer m_HordeGearContainer;
+    HumanGearContainerPvE m_HumanGearContainerPvE;
+    AllianceGearContainerPvE m_AllianceGearContainerPvE;
+    HordeGearContainerPvE m_HordeGearContainerPvE;
+    HumanGearContainerPvP m_HumanGearContainerPvP;
+    AllianceGearContainerPvP m_AllianceGearContainerPvP;
+    HordeGearContainerPvP m_HordeGearContainerPvP;
 };
 #define sTemplateNpcMgr sTemplateNPC::instance()
 #endif

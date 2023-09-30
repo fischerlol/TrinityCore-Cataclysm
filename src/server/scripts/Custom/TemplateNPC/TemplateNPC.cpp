@@ -20,7 +20,8 @@ enum GossipId
     GOSSIP_PVP_GEAR = 100,
     GOSSIP_PVE_GEAR = 200,
     GOSSIP_EXTRACT_GEAR = 300,
-    GOSSIP_HUNTER_PET = 400
+    GOSSIP_HUNTER_PET = 400,
+    GOSSIP_RESET_TALENTS = 999
 };
 
 void sTemplateNPC::LearnPlateMailSpells(Player* player)
@@ -87,9 +88,50 @@ void sTemplateNPC::RemoveAllGlyphs(Player* player)
     }
 }
 
-void sTemplateNPC::LearnTemplateTalents(Player* player)
+void sTemplateNPC::LearnTemplateTalentsPvE(Player* player)
 {
-    for (TalentContainer::const_iterator itr = m_TalentContainer.begin(); itr != m_TalentContainer.end(); ++itr)
+    player->ResetTalents(true);
+
+    for (TalentContainerPvE::const_iterator itr = m_TalentContainerPvE.begin(); itr != m_TalentContainerPvE.end(); ++itr)
+    {
+        if ((*itr)->playerClass == GetClassString(player).c_str() && (*itr)->playerSpec == sTalentsSpec)
+        {
+            
+            player->LearnSpell((*itr)->talentId, false);
+            player->AddTalent((*itr)->talentId, player->GetActiveSpec(), true);
+        }
+    }
+
+    uint32 id = 0;
+
+    for (TalentTreeIdContainer::const_iterator itr = m_TalentTreeIdContainer.begin(); itr != m_TalentTreeIdContainer.end(); ++itr)
+    {
+        if ((*itr)->playerSpec == sTalentsSpec)
+        {
+            id = (*itr)->treeId;
+            break;
+        }
+    }
+
+    if (id != 0)
+    {
+        // Set the treeId as the player's specialization
+        player->SetPrimaryTalentTree(player->GetActiveSpec(), id);
+    }
+    else
+    {
+        TC_LOG_ERROR("server.worldserver", "Could not find treeId for spec %s", sTalentsSpec.c_str());
+    }
+
+    player->SetFreeTalentPoints(0);
+    player->SendTalentsInfoData(false);
+}
+
+void sTemplateNPC::LearnTemplateTalentsPvP(Player* player)
+{
+    player->ResetTalents(true);
+
+    for (TalentContainerPvP::const_iterator itr = m_TalentContainerPvP.begin(); itr != m_TalentContainerPvP.end(); ++itr)
     {
         if ((*itr)->playerClass == GetClassString(player).c_str() && (*itr)->playerSpec == sTalentsSpec)
         {
@@ -97,13 +139,34 @@ void sTemplateNPC::LearnTemplateTalents(Player* player)
             player->AddTalent((*itr)->talentId, player->GetActiveSpec(), true);
         }
     }
+    uint32 id = 0;
+
+    for (TalentTreeIdContainer::const_iterator itr = m_TalentTreeIdContainer.begin(); itr != m_TalentTreeIdContainer.end(); ++itr)
+    {
+        if ((*itr)->playerSpec == sTalentsSpec)
+        {
+            id = (*itr)->treeId;
+            break;
+        }
+    }
+
+    if (id != 0)
+    {
+        // Set the treeId as the player's specialization
+        player->SetPrimaryTalentTree(player->GetActiveSpec(), id);
+    }
+    else
+    {
+        TC_LOG_ERROR("server.worldserver", "Could not find treeId for spec %s", sTalentsSpec.c_str());
+    }
+
     player->SetFreeTalentPoints(0);
     player->SendTalentsInfoData(false);
 }
 
-void sTemplateNPC::LearnTemplateGlyphs(Player* player)
+void sTemplateNPC::LearnTemplateGlyphsPvE(Player* player)
 {
-    for (GlyphContainer::const_iterator itr = m_GlyphContainer.begin(); itr != m_GlyphContainer.end(); ++itr)
+    for (GlyphContainerPvE::const_iterator itr = m_GlyphContainerPvE.begin(); itr != m_GlyphContainerPvE.end(); ++itr)
     {
         if ((*itr)->playerClass == GetClassString(player).c_str() && (*itr)->playerSpec == sTalentsSpec)
             ApplyGlyph(player, (*itr)->slot, (*itr)->glyph);
@@ -111,11 +174,21 @@ void sTemplateNPC::LearnTemplateGlyphs(Player* player)
     player->SendTalentsInfoData(false);
 }
 
-void sTemplateNPC::EquipTemplateGear(Player* player)
+void sTemplateNPC::LearnTemplateGlyphsPvP(Player* player)
+{
+    for (GlyphContainerPvE::const_iterator itr = m_GlyphContainerPvP.begin(); itr != m_GlyphContainerPvP.end(); ++itr)
+    {
+        if ((*itr)->playerClass == GetClassString(player).c_str() && (*itr)->playerSpec == sTalentsSpec)
+            ApplyGlyph(player, (*itr)->slot, (*itr)->glyph);
+    }
+    player->SendTalentsInfoData(false);
+}
+
+void sTemplateNPC::EquipTemplateGearPvE(Player* player)
 {
     if (player->getRace() == RACE_HUMAN)
     {
-        for (HumanGearContainer::const_iterator itr = m_HumanGearContainer.begin(); itr != m_HumanGearContainer.end(); ++itr)
+        for (HumanGearContainerPvE::const_iterator itr = m_HumanGearContainerPvE.begin(); itr != m_HumanGearContainerPvE.end(); ++itr)
         {
             if ((*itr)->playerClass == GetClassString(player).c_str() && (*itr)->playerSpec == sTalentsSpec)
             {
@@ -126,12 +199,13 @@ void sTemplateNPC::EquipTemplateGear(Player* player)
                 ApplyBonus(player, player->GetItemByPos(INVENTORY_SLOT_BAG_0, (*itr)->pos), SOCK_ENCHANTMENT_SLOT_3, (*itr)->socket3);
                 ApplyBonus(player, player->GetItemByPos(INVENTORY_SLOT_BAG_0, (*itr)->pos), BONUS_ENCHANTMENT_SLOT, (*itr)->bonusEnchant);
                 ApplyBonus(player, player->GetItemByPos(INVENTORY_SLOT_BAG_0, (*itr)->pos), PRISMATIC_ENCHANTMENT_SLOT, (*itr)->prismaticEnchant);
+                ApplyBonus(player, player->GetItemByPos(INVENTORY_SLOT_BAG_0, (*itr)->pos), REFORGE_ENCHANTMENT_SLOT, (*itr)->reforgeId);
             }
         }
     }
     else if (player->GetTeam() == ALLIANCE && player->getRace() != RACE_HUMAN)
     {
-        for (AllianceGearContainer::const_iterator itr = m_AllianceGearContainer.begin(); itr != m_AllianceGearContainer.end(); ++itr)
+        for (AllianceGearContainerPvE::const_iterator itr = m_AllianceGearContainerPvE.begin(); itr != m_AllianceGearContainerPvE.end(); ++itr)
         {
             if ((*itr)->playerClass == GetClassString(player).c_str() && (*itr)->playerSpec == sTalentsSpec)
             {
@@ -142,12 +216,13 @@ void sTemplateNPC::EquipTemplateGear(Player* player)
                 ApplyBonus(player, player->GetItemByPos(INVENTORY_SLOT_BAG_0, (*itr)->pos), SOCK_ENCHANTMENT_SLOT_3, (*itr)->socket3);
                 ApplyBonus(player, player->GetItemByPos(INVENTORY_SLOT_BAG_0, (*itr)->pos), BONUS_ENCHANTMENT_SLOT, (*itr)->bonusEnchant);
                 ApplyBonus(player, player->GetItemByPos(INVENTORY_SLOT_BAG_0, (*itr)->pos), PRISMATIC_ENCHANTMENT_SLOT, (*itr)->prismaticEnchant);
+                ApplyBonus(player, player->GetItemByPos(INVENTORY_SLOT_BAG_0, (*itr)->pos), REFORGE_ENCHANTMENT_SLOT, (*itr)->reforgeId);
             }
         }
     }
     else if (player->GetTeam() == HORDE)
     {
-        for (HordeGearContainer::const_iterator itr = m_HordeGearContainer.begin(); itr != m_HordeGearContainer.end(); ++itr)
+        for (HordeGearContainerPvE::const_iterator itr = m_HordeGearContainerPvE.begin(); itr != m_HordeGearContainerPvE.end(); ++itr)
         {
             if ((*itr)->playerClass == GetClassString(player).c_str() && (*itr)->playerSpec == sTalentsSpec)
             {
@@ -158,26 +233,116 @@ void sTemplateNPC::EquipTemplateGear(Player* player)
                 ApplyBonus(player, player->GetItemByPos(INVENTORY_SLOT_BAG_0, (*itr)->pos), SOCK_ENCHANTMENT_SLOT_3, (*itr)->socket3);
                 ApplyBonus(player, player->GetItemByPos(INVENTORY_SLOT_BAG_0, (*itr)->pos), BONUS_ENCHANTMENT_SLOT, (*itr)->bonusEnchant);
                 ApplyBonus(player, player->GetItemByPos(INVENTORY_SLOT_BAG_0, (*itr)->pos), PRISMATIC_ENCHANTMENT_SLOT, (*itr)->prismaticEnchant);
+                ApplyBonus(player, player->GetItemByPos(INVENTORY_SLOT_BAG_0, (*itr)->pos), REFORGE_ENCHANTMENT_SLOT, (*itr)->reforgeId);
             }
         }
     }
 }
 
-void sTemplateNPC::LoadTalentsContainer()
+void sTemplateNPC::EquipTemplateGearPvP(Player* player)
 {
-    for (TalentContainer::const_iterator itr = m_TalentContainer.begin(); itr != m_TalentContainer.end(); ++itr)
+    if (player->getRace() == RACE_HUMAN)
+    {
+        for (HumanGearContainerPvE::const_iterator itr = m_HumanGearContainerPvP.begin(); itr != m_HumanGearContainerPvP.end(); ++itr)
+        {
+            if ((*itr)->playerClass == GetClassString(player).c_str() && (*itr)->playerSpec == sTalentsSpec)
+            {
+                player->EquipNewItem((*itr)->pos, (*itr)->itemEntry, true); // Equip the item and apply enchants and gems
+                ApplyBonus(player, player->GetItemByPos(INVENTORY_SLOT_BAG_0, (*itr)->pos), PERM_ENCHANTMENT_SLOT, (*itr)->enchant);
+                ApplyBonus(player, player->GetItemByPos(INVENTORY_SLOT_BAG_0, (*itr)->pos), SOCK_ENCHANTMENT_SLOT, (*itr)->socket1);
+                ApplyBonus(player, player->GetItemByPos(INVENTORY_SLOT_BAG_0, (*itr)->pos), SOCK_ENCHANTMENT_SLOT_2, (*itr)->socket2);
+                ApplyBonus(player, player->GetItemByPos(INVENTORY_SLOT_BAG_0, (*itr)->pos), SOCK_ENCHANTMENT_SLOT_3, (*itr)->socket3);
+                ApplyBonus(player, player->GetItemByPos(INVENTORY_SLOT_BAG_0, (*itr)->pos), BONUS_ENCHANTMENT_SLOT, (*itr)->bonusEnchant);
+                ApplyBonus(player, player->GetItemByPos(INVENTORY_SLOT_BAG_0, (*itr)->pos), PRISMATIC_ENCHANTMENT_SLOT, (*itr)->prismaticEnchant);
+                ApplyBonus(player, player->GetItemByPos(INVENTORY_SLOT_BAG_0, (*itr)->pos), REFORGE_ENCHANTMENT_SLOT, (*itr)->reforgeId);
+            }
+        }
+    }
+    else if (player->GetTeam() == ALLIANCE && player->getRace() != RACE_HUMAN)
+    {
+        for (AllianceGearContainerPvE::const_iterator itr = m_AllianceGearContainerPvP.begin(); itr != m_AllianceGearContainerPvP.end(); ++itr)
+        {
+            if ((*itr)->playerClass == GetClassString(player).c_str() && (*itr)->playerSpec == sTalentsSpec)
+            {
+                player->EquipNewItem((*itr)->pos, (*itr)->itemEntry, true); // Equip the item and apply enchants and gems
+                ApplyBonus(player, player->GetItemByPos(INVENTORY_SLOT_BAG_0, (*itr)->pos), PERM_ENCHANTMENT_SLOT, (*itr)->enchant);
+                ApplyBonus(player, player->GetItemByPos(INVENTORY_SLOT_BAG_0, (*itr)->pos), SOCK_ENCHANTMENT_SLOT, (*itr)->socket1);
+                ApplyBonus(player, player->GetItemByPos(INVENTORY_SLOT_BAG_0, (*itr)->pos), SOCK_ENCHANTMENT_SLOT_2, (*itr)->socket2);
+                ApplyBonus(player, player->GetItemByPos(INVENTORY_SLOT_BAG_0, (*itr)->pos), SOCK_ENCHANTMENT_SLOT_3, (*itr)->socket3);
+                ApplyBonus(player, player->GetItemByPos(INVENTORY_SLOT_BAG_0, (*itr)->pos), BONUS_ENCHANTMENT_SLOT, (*itr)->bonusEnchant);
+                ApplyBonus(player, player->GetItemByPos(INVENTORY_SLOT_BAG_0, (*itr)->pos), PRISMATIC_ENCHANTMENT_SLOT, (*itr)->prismaticEnchant);
+                ApplyBonus(player, player->GetItemByPos(INVENTORY_SLOT_BAG_0, (*itr)->pos), REFORGE_ENCHANTMENT_SLOT, (*itr)->reforgeId);
+            }
+        }
+    }
+    else if (player->GetTeam() == HORDE)
+    {
+        for (HordeGearContainerPvE::const_iterator itr = m_HordeGearContainerPvP.begin(); itr != m_HordeGearContainerPvP.end(); ++itr)
+        {
+            if ((*itr)->playerClass == GetClassString(player).c_str() && (*itr)->playerSpec == sTalentsSpec)
+            {
+                player->EquipNewItem((*itr)->pos, (*itr)->itemEntry, true); // Equip the item and apply enchants and gems
+                ApplyBonus(player, player->GetItemByPos(INVENTORY_SLOT_BAG_0, (*itr)->pos), PERM_ENCHANTMENT_SLOT, (*itr)->enchant);
+                ApplyBonus(player, player->GetItemByPos(INVENTORY_SLOT_BAG_0, (*itr)->pos), SOCK_ENCHANTMENT_SLOT, (*itr)->socket1);
+                ApplyBonus(player, player->GetItemByPos(INVENTORY_SLOT_BAG_0, (*itr)->pos), SOCK_ENCHANTMENT_SLOT_2, (*itr)->socket2);
+                ApplyBonus(player, player->GetItemByPos(INVENTORY_SLOT_BAG_0, (*itr)->pos), SOCK_ENCHANTMENT_SLOT_3, (*itr)->socket3);
+                ApplyBonus(player, player->GetItemByPos(INVENTORY_SLOT_BAG_0, (*itr)->pos), BONUS_ENCHANTMENT_SLOT, (*itr)->bonusEnchant);
+                ApplyBonus(player, player->GetItemByPos(INVENTORY_SLOT_BAG_0, (*itr)->pos), PRISMATIC_ENCHANTMENT_SLOT, (*itr)->prismaticEnchant);
+                ApplyBonus(player, player->GetItemByPos(INVENTORY_SLOT_BAG_0, (*itr)->pos), REFORGE_ENCHANTMENT_SLOT, (*itr)->reforgeId);
+            }
+        }
+    }
+}
+
+
+void sTemplateNPC::LoadTalentsContainerPvE()
+{
+    for (TalentContainerPvE::const_iterator itr = m_TalentContainerPvE.begin(); itr != m_TalentContainerPvE.end(); ++itr)
         delete* itr;
 
-    m_TalentContainer.clear();
+    m_TalentContainerPvE.clear();
 
     uint32 oldMSTime = getMSTime();
     uint32 count = 0;
 
-    QueryResult result = CharacterDatabase.Query("SELECT playerClass, playerSpec, talentId FROM template_npc_talents;");
+    QueryResult result = CharacterDatabase.Query("SELECT playerClass, playerSpec, talentId FROM template_npc_talents_pve;");
 
     if (!result)
     {
-        TC_LOG_INFO("server.worldserver", ">>TEMPLATE NPC: Loaded 0 talent templates. DB table `template_npc_talents` is empty!");
+        TC_LOG_INFO("server.worldserver", ">>TEMPLATE NPC: Loaded 0 PvE talent templates. DB table `template_npc_talents_pve` is empty!");
+        return;
+    }
+
+    do
+    {
+        Field* fields = result->Fetch();
+
+        TalentTemplate* pTalent = new TalentTemplate;
+
+        pTalent->playerClass = fields[0].GetString();
+        pTalent->playerSpec = fields[1].GetString();
+        pTalent->talentId = fields[2].GetUInt32();
+        m_TalentContainerPvE.push_back(pTalent);
+        ++count;
+    } while (result->NextRow());
+    TC_LOG_INFO("server.worldserver", ">>TEMPLATE NPC: Loaded %u PvE talent templates in %u ms.", count, GetMSTimeDiffToNow(oldMSTime));
+}
+
+void sTemplateNPC::LoadTalentsContainerPvP()
+{
+    for (TalentContainerPvP::const_iterator itr = m_TalentContainerPvP.begin(); itr != m_TalentContainerPvP.end(); ++itr)
+        delete* itr;
+
+    m_TalentContainerPvP.clear();
+
+    uint32 oldMSTime = getMSTime();
+    uint32 count = 0;
+
+    QueryResult result = CharacterDatabase.Query("SELECT playerClass, playerSpec, talentId FROM template_npc_talents_pvp;");
+
+    if (!result)
+    {
+        TC_LOG_INFO("server.worldserver", ">>TEMPLATE NPC: Loaded 0 PvP talent templates. DB table `template_npc_talents_pvp` is empty!");
         return;
     }
 
@@ -191,27 +356,60 @@ void sTemplateNPC::LoadTalentsContainer()
         pTalent->playerSpec = fields[1].GetString();
         pTalent->talentId = fields[2].GetUInt32();
 
-        m_TalentContainer.push_back(pTalent);
+        m_TalentContainerPvP.push_back(pTalent);
         ++count;
     } while (result->NextRow());
-    TC_LOG_INFO("server.worldserver", ">>TEMPLATE NPC: Loaded %u talent templates in %u ms.", count, GetMSTimeDiffToNow(oldMSTime));
+    TC_LOG_INFO("server.worldserver", ">>TEMPLATE NPC: Loaded %u PvP talent templates in %u ms.", count, GetMSTimeDiffToNow(oldMSTime));
 }
 
-void sTemplateNPC::LoadGlyphsContainer()
+void sTemplateNPC::LoadTalentTreeId()
 {
-    for (GlyphContainer::const_iterator itr = m_GlyphContainer.begin(); itr != m_GlyphContainer.end(); ++itr)
+    for (TalentTreeIdContainer::const_iterator itr = m_TalentTreeIdContainer.begin(); itr != m_TalentTreeIdContainer.end(); ++itr)
         delete* itr;
 
-    m_GlyphContainer.clear();
+    m_TalentTreeIdContainer.clear();
 
-    QueryResult result = CharacterDatabase.Query("SELECT playerClass, playerSpec, slot, glyph FROM template_npc_glyphs;");
+    uint32 oldMSTime = getMSTime();
+    uint32 count = 0;
+
+    QueryResult result = CharacterDatabase.Query("SELECT playerSpec, treeId FROM template_npc_talents_tree_id;");
+
+    if (!result)
+    {
+        TC_LOG_INFO("server.worldserver", ">>TEMPLATE NPC: Loaded 0 template talent specializations. DB table `template_npc_talents_tree_id` is empty!");
+        return;
+    }
+
+    do
+    {
+        Field* fields = result->Fetch();
+
+        TalentTreeId* pTalent = new TalentTreeId;
+
+        pTalent->playerSpec = fields[0].GetString();
+        pTalent->treeId = fields[1].GetUInt32();
+
+        m_TalentTreeIdContainer.push_back(pTalent);
+        ++count;
+    } while (result->NextRow());
+    TC_LOG_INFO("server.worldserver", ">>TEMPLATE NPC: Loaded %u template talent specializations in %u ms.", count, GetMSTimeDiffToNow(oldMSTime));
+}
+
+void sTemplateNPC::LoadGlyphsContainerPvE()
+{
+    for (GlyphContainerPvE::const_iterator itr = m_GlyphContainerPvE.begin(); itr != m_GlyphContainerPvE.end(); ++itr)
+        delete* itr;
+
+    m_GlyphContainerPvE.clear();
+
+    QueryResult result = CharacterDatabase.Query("SELECT playerClass, playerSpec, slot, glyph FROM template_npc_glyphs_pve;");
 
     uint32 oldMSTime = getMSTime();
     uint32 count = 0;
 
     if (!result)
     {
-        TC_LOG_INFO("server.worldserver", ">>TEMPLATE NPC: Loaded 0 glyph templates. DB table `template_npc_glyphs` is empty!");
+        TC_LOG_INFO("server.worldserver", ">>TEMPLATE NPC: Loaded 0 PvE glyph templates. DB table `template_npc_glyphs_pve` is empty!");
         return;
     }
 
@@ -226,27 +424,62 @@ void sTemplateNPC::LoadGlyphsContainer()
         pGlyph->slot = fields[2].GetUInt8();
         pGlyph->glyph = fields[3].GetUInt32();
 
-        m_GlyphContainer.push_back(pGlyph);
+        m_GlyphContainerPvE.push_back(pGlyph);
         ++count;
     } while (result->NextRow());
-    TC_LOG_INFO("server.worldserver", ">>TEMPLATE NPC: Loaded %u glyph templates in %u ms.", count, GetMSTimeDiffToNow(oldMSTime));
+    TC_LOG_INFO("server.worldserver", ">>TEMPLATE NPC: Loaded %u PvE glyph templates in %u ms.", count, GetMSTimeDiffToNow(oldMSTime));
 }
 
-void sTemplateNPC::LoadHumanGearContainer()
+void sTemplateNPC::LoadGlyphsContainerPvP()
 {
-    for (HumanGearContainer::const_iterator itr = m_HumanGearContainer.begin(); itr != m_HumanGearContainer.end(); ++itr)
+    for (GlyphContainerPvP::const_iterator itr = m_GlyphContainerPvP.begin(); itr != m_GlyphContainerPvP.end(); ++itr)
         delete* itr;
 
-    m_HumanGearContainer.clear();
+    m_GlyphContainerPvP.clear();
 
-    QueryResult result = CharacterDatabase.Query("SELECT playerClass, playerSpec, pos, itemEntry, enchant, socket1, socket2, socket3, bonusEnchant, prismaticEnchant FROM template_npc_human;");
+    QueryResult result = CharacterDatabase.Query("SELECT playerClass, playerSpec, slot, glyph FROM template_npc_glyphs_pvp;");
 
     uint32 oldMSTime = getMSTime();
     uint32 count = 0;
 
     if (!result)
     {
-        TC_LOG_INFO("server.worldserver", ">>TEMPLATE NPC: Loaded 0 'gear templates. DB table `template_npc_human` is empty!");
+        TC_LOG_INFO("server.worldserver", ">>TEMPLATE NPC: Loaded 0 PvP glyph templates. DB table `template_npc_glyphs_pvp` is empty!");
+        return;
+    }
+
+    do
+    {
+        Field* fields = result->Fetch();
+
+        GlyphTemplate* pGlyph = new GlyphTemplate;
+
+        pGlyph->playerClass = fields[0].GetString();
+        pGlyph->playerSpec = fields[1].GetString();
+        pGlyph->slot = fields[2].GetUInt8();
+        pGlyph->glyph = fields[3].GetUInt32();
+
+        m_GlyphContainerPvP.push_back(pGlyph);
+        ++count;
+    } while (result->NextRow());
+    TC_LOG_INFO("server.worldserver", ">>TEMPLATE NPC: Loaded %u PvP glyph templates in %u ms.", count, GetMSTimeDiffToNow(oldMSTime));
+}
+
+void sTemplateNPC::LoadHumanGearContainerPvE()
+{
+    for (HumanGearContainerPvE::const_iterator itr = m_HumanGearContainerPvE.begin(); itr != m_HumanGearContainerPvE.end(); ++itr)
+        delete* itr;
+
+    m_HumanGearContainerPvE.clear();
+
+    QueryResult result = CharacterDatabase.Query("SELECT playerClass, playerSpec, pos, itemEntry, enchant, socket1, socket2, socket3, bonusEnchant, prismaticEnchant, reforgeId FROM template_npc_human_pve;");
+
+    uint32 oldMSTime = getMSTime();
+    uint32 count = 0;
+
+    if (!result)
+    {
+        TC_LOG_INFO("server.worldserver", ">>TEMPLATE NPC: Loaded 0 PvE 'gear templates. DB table `template_npc_human_pve` is empty!");
         return;
     }
 
@@ -267,27 +500,27 @@ void sTemplateNPC::LoadHumanGearContainer()
         pItem->bonusEnchant = fields[8].GetUInt32();
         pItem->prismaticEnchant = fields[9].GetUInt32();
 
-        m_HumanGearContainer.push_back(pItem);
+        m_HumanGearContainerPvE.push_back(pItem);
         ++count;
     } while (result->NextRow());
-    TC_LOG_INFO("server.worldserver", ">>TEMPLATE NPC: Loaded %u gear templates for Humans in %u ms.", count, GetMSTimeDiffToNow(oldMSTime));
+    TC_LOG_INFO("server.worldserver", ">>TEMPLATE NPC: Loaded %u PvE gear templates for Human in %u ms.", count, GetMSTimeDiffToNow(oldMSTime));
 }
 
-void sTemplateNPC::LoadAllianceGearContainer()
+void sTemplateNPC::LoadAllianceGearContainerPvE()
 {
-    for (AllianceGearContainer::const_iterator itr = m_AllianceGearContainer.begin(); itr != m_AllianceGearContainer.end(); ++itr)
+    for (AllianceGearContainerPvE::const_iterator itr = m_AllianceGearContainerPvE.begin(); itr != m_AllianceGearContainerPvE.end(); ++itr)
         delete* itr;
 
-    m_AllianceGearContainer.clear();
+    m_AllianceGearContainerPvE.clear();
 
-    QueryResult result = CharacterDatabase.Query("SELECT playerClass, playerSpec, pos, itemEntry, enchant, socket1, socket2, socket3, bonusEnchant, prismaticEnchant FROM template_npc_alliance;");
+    QueryResult result = CharacterDatabase.Query("SELECT playerClass, playerSpec, pos, itemEntry, enchant, socket1, socket2, socket3, bonusEnchant, prismaticEnchant, reforgeId FROM template_npc_alliance_pve;");
 
     uint32 oldMSTime = getMSTime();
     uint32 count = 0;
 
     if (!result)
     {
-        TC_LOG_INFO("server.worldserver", ">>TEMPLATE NPC: Loaded 0 'gear templates. DB table `template_npc_alliance` is empty!");
+        TC_LOG_INFO("server.worldserver", ">>TEMPLATE NPC: Loaded 0 PvE 'gear templates. DB table `template_npc_alliance_pve` is empty!");
         return;
     }
 
@@ -308,27 +541,27 @@ void sTemplateNPC::LoadAllianceGearContainer()
         pItem->bonusEnchant = fields[8].GetUInt32();
         pItem->prismaticEnchant = fields[9].GetUInt32();
 
-        m_AllianceGearContainer.push_back(pItem);
+        m_AllianceGearContainerPvE.push_back(pItem);
         ++count;
     } while (result->NextRow());
-    TC_LOG_INFO("server.worldserver", ">>TEMPLATE NPC: Loaded %u gear templates for Alliances in %u ms.", count, GetMSTimeDiffToNow(oldMSTime));
+    TC_LOG_INFO("server.worldserver", ">>TEMPLATE NPC: Loaded %u PvE gear templates for Alliance in %u ms.", count, GetMSTimeDiffToNow(oldMSTime));
 }
 
-void sTemplateNPC::LoadHordeGearContainer()
+void sTemplateNPC::LoadHordeGearContainerPvE()
 {
-    for (HordeGearContainer::const_iterator itr = m_HordeGearContainer.begin(); itr != m_HordeGearContainer.end(); ++itr)
+    for (HordeGearContainerPvE::const_iterator itr = m_HordeGearContainerPvE.begin(); itr != m_HordeGearContainerPvE.end(); ++itr)
         delete* itr;
 
-    m_HordeGearContainer.clear();
+    m_HordeGearContainerPvE.clear();
 
-    QueryResult result = CharacterDatabase.Query("SELECT playerClass, playerSpec, pos, itemEntry, enchant, socket1, socket2, socket3, bonusEnchant, prismaticEnchant FROM template_npc_horde;");
+    QueryResult result = CharacterDatabase.Query("SELECT playerClass, playerSpec, pos, itemEntry, enchant, socket1, socket2, socket3, bonusEnchant, prismaticEnchant, reforgeId FROM template_npc_horde_pve;");
 
     uint32 oldMSTime = getMSTime();
     uint32 count = 0;
 
     if (!result)
     {
-        TC_LOG_INFO("server.worldserver", ">>TEMPLATE NPC: Loaded 0 'gear templates. DB table `template_npc_horde` is empty!");
+        TC_LOG_INFO("server.worldserver", ">>TEMPLATE NPC: Loaded 0 PvE 'gear templates. DB table `template_npc_horde_pve` is empty!");
         return;
     }
 
@@ -349,10 +582,134 @@ void sTemplateNPC::LoadHordeGearContainer()
         pItem->bonusEnchant = fields[8].GetUInt32();
         pItem->prismaticEnchant = fields[9].GetUInt32();
 
-        m_HordeGearContainer.push_back(pItem);
+        m_HordeGearContainerPvE.push_back(pItem);
         ++count;
     } while (result->NextRow());
-    TC_LOG_INFO("server.worldserver", ">>TEMPLATE NPC: Loaded %u gear templates for Hordes in %u ms.", count, GetMSTimeDiffToNow(oldMSTime));
+    TC_LOG_INFO("server.worldserver", ">>TEMPLATE NPC: Loaded %u PvE gear templates for Horde in %u ms.", count, GetMSTimeDiffToNow(oldMSTime));
+}
+
+void sTemplateNPC::LoadHumanGearContainerPvP()
+{
+    for (HumanGearContainerPvP::const_iterator itr = m_HumanGearContainerPvP.begin(); itr != m_HumanGearContainerPvP.end(); ++itr)
+        delete* itr;
+
+    m_HumanGearContainerPvP.clear();
+
+    QueryResult result = CharacterDatabase.Query("SELECT playerClass, playerSpec, pos, itemEntry, enchant, socket1, socket2, socket3, bonusEnchant, prismaticEnchant, reforgeId FROM template_npc_human_pvp;");
+
+    uint32 oldMSTime = getMSTime();
+    uint32 count = 0;
+
+    if (!result)
+    {
+        TC_LOG_INFO("server.worldserver", ">>TEMPLATE NPC: Loaded 0 PvP gear templates. DB table `template_npc_human_pvp` is empty!");
+        return;
+    }
+
+    do
+    {
+        Field* fields = result->Fetch();
+
+        HumanGearTemplate* pItem = new HumanGearTemplate;
+
+        pItem->playerClass = fields[0].GetString();
+        pItem->playerSpec = fields[1].GetString();
+        pItem->pos = fields[2].GetUInt8();
+        pItem->itemEntry = fields[3].GetUInt32();
+        pItem->enchant = fields[4].GetUInt32();
+        pItem->socket1 = fields[5].GetUInt32();
+        pItem->socket2 = fields[6].GetUInt32();
+        pItem->socket3 = fields[7].GetUInt32();
+        pItem->bonusEnchant = fields[8].GetUInt32();
+        pItem->prismaticEnchant = fields[9].GetUInt32();
+        pItem->reforgeId = fields[10].GetUInt32();
+
+        m_HumanGearContainerPvP.push_back(pItem);
+        ++count;
+    } while (result->NextRow());
+    TC_LOG_INFO("server.worldserver", ">>TEMPLATE NPC: Loaded %u PvP gear templates for Human in %u ms.", count, GetMSTimeDiffToNow(oldMSTime));
+}
+
+void sTemplateNPC::LoadAllianceGearContainerPvP()
+{
+    for (AllianceGearContainerPvP::const_iterator itr = m_AllianceGearContainerPvP.begin(); itr != m_AllianceGearContainerPvP.end(); ++itr)
+        delete* itr;
+
+    m_AllianceGearContainerPvP.clear();
+
+    QueryResult result = CharacterDatabase.Query("SELECT playerClass, playerSpec, pos, itemEntry, enchant, socket1, socket2, socket3, bonusEnchant, prismaticEnchant, reforgeId FROM template_npc_alliance_pvp;");
+
+    uint32 oldMSTime = getMSTime();
+    uint32 count = 0;
+
+    if (!result)
+    {
+        TC_LOG_INFO("server.worldserver", ">>TEMPLATE NPC: Loaded 0 PvP gear templates. DB table `template_npc_alliance_pvp` is empty!");
+        return;
+    }
+
+    do
+    {
+        Field* fields = result->Fetch();
+
+        AllianceGearTemplate* pItem = new AllianceGearTemplate;
+
+        pItem->playerClass = fields[0].GetString();
+        pItem->playerSpec = fields[1].GetString();
+        pItem->pos = fields[2].GetUInt8();
+        pItem->itemEntry = fields[3].GetUInt32();
+        pItem->enchant = fields[4].GetUInt32();
+        pItem->socket1 = fields[5].GetUInt32();
+        pItem->socket2 = fields[6].GetUInt32();
+        pItem->socket3 = fields[7].GetUInt32();
+        pItem->bonusEnchant = fields[8].GetUInt32();
+        pItem->prismaticEnchant = fields[9].GetUInt32();
+
+        m_AllianceGearContainerPvP.push_back(pItem);
+        ++count;
+    } while (result->NextRow());
+    TC_LOG_INFO("server.worldserver", ">>TEMPLATE NPC: Loaded %u PvP gear templates for Alliance in %u ms.", count, GetMSTimeDiffToNow(oldMSTime));
+}
+
+void sTemplateNPC::LoadHordeGearContainerPvP()
+{
+    for (HordeGearContainerPvP::const_iterator itr = m_HordeGearContainerPvP.begin(); itr != m_HordeGearContainerPvP.end(); ++itr)
+        delete* itr;
+
+    m_HordeGearContainerPvP.clear();
+
+    QueryResult result = CharacterDatabase.Query("SELECT playerClass, playerSpec, pos, itemEntry, enchant, socket1, socket2, socket3, bonusEnchant, prismaticEnchant, reforgeId FROM template_npc_horde_pvp;");
+
+    uint32 oldMSTime = getMSTime();
+    uint32 count = 0;
+
+    if (!result)
+    {
+        TC_LOG_INFO("server.worldserver", ">>TEMPLATE NPC: Loaded 0 PvP gear templates. DB table `template_npc_horde_pve` is empty!");
+        return;
+    }
+
+    do
+    {
+        Field* fields = result->Fetch();
+
+        HordeGearTemplate* pItem = new HordeGearTemplate;
+
+        pItem->playerClass = fields[0].GetString();
+        pItem->playerSpec = fields[1].GetString();
+        pItem->pos = fields[2].GetUInt8();
+        pItem->itemEntry = fields[3].GetUInt32();
+        pItem->enchant = fields[4].GetUInt32();
+        pItem->socket1 = fields[5].GetUInt32();
+        pItem->socket2 = fields[6].GetUInt32();
+        pItem->socket3 = fields[7].GetUInt32();
+        pItem->bonusEnchant = fields[8].GetUInt32();
+        pItem->prismaticEnchant = fields[9].GetUInt32();
+
+        m_HordeGearContainerPvP.push_back(pItem);
+        ++count;
+    } while (result->NextRow());
+    TC_LOG_INFO("server.worldserver", ">>TEMPLATE NPC: Loaded %u PvP gear templates for Horde in %u ms.", count, GetMSTimeDiffToNow(oldMSTime));
 }
 
 std::string sTemplateNPC::GetClassString(Player* player)
@@ -384,30 +741,31 @@ bool sTemplateNPC::OverwriteTemplate(Player* player, std::string& playerSpecStr)
     // Delete old gear templates before extracting new ones
     if (player->getRace() == RACE_HUMAN)
     {
-        CharacterDatabase.PExecute("DELETE FROM template_npc_human WHERE playerClass = '%s' AND playerSpec = '%s';", GetClassString(player).c_str(), playerSpecStr.c_str());
+        CharacterDatabase.PExecute("DELETE FROM template_npc_human_pve WHERE playerClass = '%s' AND playerSpec = '%s';", GetClassString(player).c_str(), playerSpecStr.c_str());
         player->GetSession()->SendAreaTriggerMessage("Template successfuly created!");
         return false;
     }
     else if (player->GetTeam() == ALLIANCE && player->getRace() != RACE_HUMAN)
     {
-        CharacterDatabase.PExecute("DELETE FROM template_npc_alliance WHERE playerClass = '%s' AND playerSpec = '%s';", GetClassString(player).c_str(), playerSpecStr.c_str());
+        CharacterDatabase.PExecute("DELETE FROM template_npc_alliance_pve WHERE playerClass = '%s' AND playerSpec = '%s';", GetClassString(player).c_str(), playerSpecStr.c_str());
         player->GetSession()->SendAreaTriggerMessage("Template successfuly created!");
         return false;
     }
     else if (player->GetTeam() == HORDE)
     {                                                                                                        // ????????????? sTemplateNpcMgr here??
-        CharacterDatabase.PExecute("DELETE FROM template_npc_horde WHERE playerClass = '%s' AND playerSpec = '%s';", GetClassString(player).c_str(), playerSpecStr.c_str());
+        CharacterDatabase.PExecute("DELETE FROM template_npc_horde_pve WHERE playerClass = '%s' AND playerSpec = '%s';", GetClassString(player).c_str(), playerSpecStr.c_str());
         player->GetSession()->SendAreaTriggerMessage("Template successfuly created!");
         return false;
     }
     return true;
 }
 
-void sTemplateNPC::ExtractGearTemplateToDB(Player* player, std::string& playerSpecStr)
+void sTemplateNPC::ExtractGearTemplateToDBPvE(Player* player, std::string& playerSpecStr)
 {
-    //CharacterDatabase.PExecute("DELETE FROM template_npc_human WHERE playerClass = '%s' AND playerSpec = '%s';", GetClassString(player).c_str(), playerSpecStr.c_str());
-    //CharacterDatabase.PExecute("DELETE FROM template_npc_alliance WHERE playerClass = '%s' AND playerSpec = '%s';", GetClassString(player).c_str(), playerSpecStr.c_str());
-    //CharacterDatabase.PExecute("DELETE FROM template_npc_horde WHERE playerClass = '%s' AND playerSpec = '%s';", GetClassString(player).c_str(), playerSpecStr.c_str());
+    TC_LOG_INFO("server.worldserver", ">>TEMPLATE NPC: Extracting gear template for %s %s...", GetClassString(player).c_str(), playerSpecStr.c_str());
+    CharacterDatabase.PExecute("DELETE FROM template_npc_human_pve WHERE playerClass = '%s' AND playerSpec = '%s';", GetClassString(player).c_str(), playerSpecStr.c_str());
+    CharacterDatabase.PExecute("DELETE FROM template_npc_alliance_pve WHERE playerClass = '%s' AND playerSpec = '%s';", GetClassString(player).c_str(), playerSpecStr.c_str());
+    CharacterDatabase.PExecute("DELETE FROM template_npc_horde_pve WHERE playerClass = '%s' AND playerSpec = '%s';", GetClassString(player).c_str(), playerSpecStr.c_str());
 
     for (uint8 i = EQUIPMENT_SLOT_START; i < EQUIPMENT_SLOT_END; ++i)
     {
@@ -415,49 +773,82 @@ void sTemplateNPC::ExtractGearTemplateToDB(Player* player, std::string& playerSp
 
         if (equippedItem)
         {
-            CharacterDatabase.PExecute("INSERT INTO template_npc_human (`playerClass`, `playerSpec`, `pos`, `itemEntry`, `enchant`, `socket1`, `socket2`, `socket3`, `bonusEnchant`, `prismaticEnchant`) VALUES ('%s', '%s', '%u', '%u', '%u', '%u', '%u', '%u', '%u', '%u');"
+            CharacterDatabase.PExecute("INSERT INTO template_npc_human_pve (`playerClass`, `playerSpec`, `pos`, `itemEntry`, `enchant`, `socket1`, `socket2`, `socket3`, `bonusEnchant`, `prismaticEnchant`) VALUES ('%s', '%s', '%u', '%u', '%u', '%u', '%u', '%u', '%u', '%u');"
                 , GetClassString(player).c_str(), playerSpecStr.c_str(), equippedItem->GetSlot(), equippedItem->GetEntry(), equippedItem->GetEnchantmentId(PERM_ENCHANTMENT_SLOT),
                 equippedItem->GetEnchantmentId(SOCK_ENCHANTMENT_SLOT), equippedItem->GetEnchantmentId(SOCK_ENCHANTMENT_SLOT_2), equippedItem->GetEnchantmentId(SOCK_ENCHANTMENT_SLOT_3),
                 equippedItem->GetEnchantmentId(BONUS_ENCHANTMENT_SLOT), equippedItem->GetEnchantmentId(PRISMATIC_ENCHANTMENT_SLOT));
-            CharacterDatabase.PExecute("INSERT INTO template_npc_alliance (`playerClass`, `playerSpec`, `pos`, `itemEntry`, `enchant`, `socket1`, `socket2`, `socket3`, `bonusEnchant`, `prismaticEnchant`) VALUES ('%s', '%s', '%u', '%u', '%u', '%u', '%u', '%u', '%u', '%u');"
+            CharacterDatabase.PExecute("INSERT INTO template_npc_alliance_pve (`playerClass`, `playerSpec`, `pos`, `itemEntry`, `enchant`, `socket1`, `socket2`, `socket3`, `bonusEnchant`, `prismaticEnchant`) VALUES ('%s', '%s', '%u', '%u', '%u', '%u', '%u', '%u', '%u', '%u');"
                 , GetClassString(player).c_str(), playerSpecStr.c_str(), equippedItem->GetSlot(), equippedItem->GetEntry(), equippedItem->GetEnchantmentId(PERM_ENCHANTMENT_SLOT),
                 equippedItem->GetEnchantmentId(SOCK_ENCHANTMENT_SLOT), equippedItem->GetEnchantmentId(SOCK_ENCHANTMENT_SLOT_2), equippedItem->GetEnchantmentId(SOCK_ENCHANTMENT_SLOT_3),
                 equippedItem->GetEnchantmentId(BONUS_ENCHANTMENT_SLOT), equippedItem->GetEnchantmentId(PRISMATIC_ENCHANTMENT_SLOT));
-            CharacterDatabase.PExecute("INSERT INTO template_npc_horde (`playerClass`, `playerSpec`, `pos`, `itemEntry`, `enchant`, `socket1`, `socket2`, `socket3`, `bonusEnchant`, `prismaticEnchant`) VALUES ('%s', '%s', '%u', '%u', '%u', '%u', '%u', '%u', '%u', '%u');"
+            CharacterDatabase.PExecute("INSERT INTO template_npc_horde_pve (`playerClass`, `playerSpec`, `pos`, `itemEntry`, `enchant`, `socket1`, `socket2`, `socket3`, `bonusEnchant`, `prismaticEnchant`) VALUES ('%s', '%s', '%u', '%u', '%u', '%u', '%u', '%u', '%u', '%u');"
                 , GetClassString(player).c_str(), playerSpecStr.c_str(), equippedItem->GetSlot(), equippedItem->GetEntry(), equippedItem->GetEnchantmentId(PERM_ENCHANTMENT_SLOT),
                 equippedItem->GetEnchantmentId(SOCK_ENCHANTMENT_SLOT), equippedItem->GetEnchantmentId(SOCK_ENCHANTMENT_SLOT_2), equippedItem->GetEnchantmentId(SOCK_ENCHANTMENT_SLOT_3),
                 equippedItem->GetEnchantmentId(BONUS_ENCHANTMENT_SLOT), equippedItem->GetEnchantmentId(PRISMATIC_ENCHANTMENT_SLOT));
         }
-
-        /*if (equippedItem)
-        {
-            if (player->getRace() == RACE_HUMAN)
-            {
-                CharacterDatabase.PExecute("INSERT INTO template_npc_human (`playerClass`, `playerSpec`, `pos`, `itemEntry`, `enchant`, `socket1`, `socket2`, `socket3`, `bonusEnchant`, `prismaticEnchant`) VALUES ('%s', '%s', '%u', '%u', '%u', '%u', '%u', '%u', '%u', '%u');"
-                    , GetClassString(player).c_str(), playerSpecStr.c_str(), equippedItem->GetSlot(), equippedItem->GetEntry(), equippedItem->GetEnchantmentId(PERM_ENCHANTMENT_SLOT),
-                    equippedItem->GetEnchantmentId(SOCK_ENCHANTMENT_SLOT), equippedItem->GetEnchantmentId(SOCK_ENCHANTMENT_SLOT_2), equippedItem->GetEnchantmentId(SOCK_ENCHANTMENT_SLOT_3),
-                    equippedItem->GetEnchantmentId(BONUS_ENCHANTMENT_SLOT), equippedItem->GetEnchantmentId(PRISMATIC_ENCHANTMENT_SLOT));
-            }
-            else if (player->GetTeam() == ALLIANCE && player->getRace() != RACE_HUMAN)
-            {
-                CharacterDatabase.PExecute("INSERT INTO template_npc_alliance (`playerClass`, `playerSpec`, `pos`, `itemEntry`, `enchant`, `socket1`, `socket2`, `socket3`, `bonusEnchant`, `prismaticEnchant`) VALUES ('%s', '%s', '%u', '%u', '%u', '%u', '%u', '%u', '%u', '%u');"
-                    , GetClassString(player).c_str(), playerSpecStr.c_str(), equippedItem->GetSlot(), equippedItem->GetEntry(), equippedItem->GetEnchantmentId(PERM_ENCHANTMENT_SLOT),
-                    equippedItem->GetEnchantmentId(SOCK_ENCHANTMENT_SLOT), equippedItem->GetEnchantmentId(SOCK_ENCHANTMENT_SLOT_2), equippedItem->GetEnchantmentId(SOCK_ENCHANTMENT_SLOT_3),
-                    equippedItem->GetEnchantmentId(BONUS_ENCHANTMENT_SLOT), equippedItem->GetEnchantmentId(PRISMATIC_ENCHANTMENT_SLOT));
-            }
-            else if (player->GetTeam() == HORDE)
-            {
-                CharacterDatabase.PExecute("INSERT INTO template_npc_horde (`playerClass`, `playerSpec`, `pos`, `itemEntry`, `enchant`, `socket1`, `socket2`, `socket3`, `bonusEnchant`, `prismaticEnchant`) VALUES ('%s', '%s', '%u', '%u', '%u', '%u', '%u', '%u', '%u', '%u');"
-                    , GetClassString(player).c_str(), playerSpecStr.c_str(), equippedItem->GetSlot(), equippedItem->GetEntry(), equippedItem->GetEnchantmentId(PERM_ENCHANTMENT_SLOT),
-                    equippedItem->GetEnchantmentId(SOCK_ENCHANTMENT_SLOT), equippedItem->GetEnchantmentId(SOCK_ENCHANTMENT_SLOT_2), equippedItem->GetEnchantmentId(SOCK_ENCHANTMENT_SLOT_3),
-                    equippedItem->GetEnchantmentId(BONUS_ENCHANTMENT_SLOT), equippedItem->GetEnchantmentId(PRISMATIC_ENCHANTMENT_SLOT));
-            }
-        }*/
     }
 }
 
-void sTemplateNPC::ExtractTalentTemplateToDB(Player* player, std::string& playerSpecStr)
+void sTemplateNPC::ExtractGearTemplateToDBHumanPvP(Player* player, std::string& playerSpecStr)
 {
+    TC_LOG_INFO("server.worldserver", ">>TEMPLATE NPC: Extracting gear template for %s %s...", GetClassString(player).c_str(), playerSpecStr.c_str());
+    CharacterDatabase.PExecute("DELETE FROM template_npc_human_pvp WHERE playerClass = '%s' AND playerSpec = '%s';", GetClassString(player).c_str(), playerSpecStr.c_str());
+
+    for (uint8 i = EQUIPMENT_SLOT_START; i < EQUIPMENT_SLOT_END; ++i)
+    {
+        Item* equippedItem = player->GetItemByPos(INVENTORY_SLOT_BAG_0, i);
+
+        if (equippedItem)
+        {
+            CharacterDatabase.PExecute("INSERT INTO template_npc_human_pvp (`playerClass`, `playerSpec`, `pos`, `itemEntry`, `enchant`, `socket1`, `socket2`, `socket3`, `bonusEnchant`, `prismaticEnchant`) VALUES ('%s', '%s', '%u', '%u', '%u', '%u', '%u', '%u', '%u', '%u');"
+                , GetClassString(player).c_str(), playerSpecStr.c_str(), equippedItem->GetSlot(), equippedItem->GetEntry(), equippedItem->GetEnchantmentId(PERM_ENCHANTMENT_SLOT),
+                equippedItem->GetEnchantmentId(SOCK_ENCHANTMENT_SLOT), equippedItem->GetEnchantmentId(SOCK_ENCHANTMENT_SLOT_2), equippedItem->GetEnchantmentId(SOCK_ENCHANTMENT_SLOT_3),
+                equippedItem->GetEnchantmentId(BONUS_ENCHANTMENT_SLOT), equippedItem->GetEnchantmentId(PRISMATIC_ENCHANTMENT_SLOT));
+        }
+    }
+}
+
+void sTemplateNPC::ExtractGearTemplateToDBAlliancePvP(Player* player, std::string& playerSpecStr)
+{
+    TC_LOG_INFO("server.worldserver", ">>TEMPLATE NPC: Extracting gear template for %s %s...", GetClassString(player).c_str(), playerSpecStr.c_str());
+    CharacterDatabase.PExecute("DELETE FROM template_npc_alliance_pvp WHERE playerClass = '%s' AND playerSpec = '%s';", GetClassString(player).c_str(), playerSpecStr.c_str());
+
+    for (uint8 i = EQUIPMENT_SLOT_START; i < EQUIPMENT_SLOT_END; ++i)
+    {
+        Item* equippedItem = player->GetItemByPos(INVENTORY_SLOT_BAG_0, i);
+
+        if (equippedItem)
+        {
+            CharacterDatabase.PExecute("INSERT INTO template_npc_alliance_pvp (`playerClass`, `playerSpec`, `pos`, `itemEntry`, `enchant`, `socket1`, `socket2`, `socket3`, `bonusEnchant`, `prismaticEnchant`) VALUES ('%s', '%s', '%u', '%u', '%u', '%u', '%u', '%u', '%u', '%u');"
+                , GetClassString(player).c_str(), playerSpecStr.c_str(), equippedItem->GetSlot(), equippedItem->GetEntry(), equippedItem->GetEnchantmentId(PERM_ENCHANTMENT_SLOT),
+                equippedItem->GetEnchantmentId(SOCK_ENCHANTMENT_SLOT), equippedItem->GetEnchantmentId(SOCK_ENCHANTMENT_SLOT_2), equippedItem->GetEnchantmentId(SOCK_ENCHANTMENT_SLOT_3),
+                equippedItem->GetEnchantmentId(BONUS_ENCHANTMENT_SLOT), equippedItem->GetEnchantmentId(PRISMATIC_ENCHANTMENT_SLOT));
+        }
+    }
+}
+
+void sTemplateNPC::ExtractGearTemplateToDBHordePvP(Player* player, std::string& playerSpecStr)
+{
+    TC_LOG_INFO("server.worldserver", ">>TEMPLATE NPC: Extracting gear template for %s %s...", GetClassString(player).c_str(), playerSpecStr.c_str());
+    CharacterDatabase.PExecute("DELETE FROM template_npc_horde_pvp WHERE playerClass = '%s' AND playerSpec = '%s';", GetClassString(player).c_str(), playerSpecStr.c_str());
+
+    for (uint8 i = EQUIPMENT_SLOT_START; i < EQUIPMENT_SLOT_END; ++i)
+    {
+        Item* equippedItem = player->GetItemByPos(INVENTORY_SLOT_BAG_0, i);
+
+        if (equippedItem)
+        {
+            CharacterDatabase.PExecute("INSERT INTO template_npc_horde_pvp (`playerClass`, `playerSpec`, `pos`, `itemEntry`, `enchant`, `socket1`, `socket2`, `socket3`, `bonusEnchant`, `prismaticEnchant`) VALUES ('%s', '%s', '%u', '%u', '%u', '%u', '%u', '%u', '%u', '%u');"
+                , GetClassString(player).c_str(), playerSpecStr.c_str(), equippedItem->GetSlot(), equippedItem->GetEntry(), equippedItem->GetEnchantmentId(PERM_ENCHANTMENT_SLOT),
+                equippedItem->GetEnchantmentId(SOCK_ENCHANTMENT_SLOT), equippedItem->GetEnchantmentId(SOCK_ENCHANTMENT_SLOT_2), equippedItem->GetEnchantmentId(SOCK_ENCHANTMENT_SLOT_3),
+                equippedItem->GetEnchantmentId(BONUS_ENCHANTMENT_SLOT), equippedItem->GetEnchantmentId(PRISMATIC_ENCHANTMENT_SLOT));
+        }
+    }
+}
+
+void sTemplateNPC::ExtractTalentTemplateToDBPvE(Player* player, std::string& playerSpecStr)
+{
+    CharacterDatabase.PExecute("DELETE FROM template_npc_talents_pve WHERE playerClass = '%s' AND playerSpec = '%s';", GetClassString(player).c_str(), playerSpecStr.c_str());
     QueryResult result = CharacterDatabase.PQuery("SELECT spell FROM character_talent WHERE guid = '%u' "
         "AND talentGroup = '%u';", player->GetGUID(), player->GetActiveSpec());
 
@@ -477,15 +868,52 @@ void sTemplateNPC::ExtractTalentTemplateToDB(Player* player, std::string& player
             Field* fields = result->Fetch();
             uint32 spell = fields[0].GetUInt32();
 
-            CharacterDatabase.PExecute("INSERT INTO template_npc_talents (playerClass, playerSpec, talentId) "
+            CharacterDatabase.PExecute("INSERT INTO template_npc_talents_pve (playerClass, playerSpec, talentId) "
                 "VALUES ('%s', '%s', '%u');", GetClassString(player).c_str(), playerSpecStr.c_str(), spell);
         } while (result->NextRow());
     }
 }
 
-void sTemplateNPC::ExtractGlyphsTemplateToDB(Player* player, std::string& playerSpecStr)
+void sTemplateNPC::ExtractTalentTemplateToDBPvP(Player* player, std::string& playerSpecStr)
 {
-    //CharacterDatabase.PExecute("DELETE FROM template_npc_glyphs WHERE playerClass = '%s' AND playerSpec = '%s';", GetClassString(player).c_str(), playerSpecStr.c_str());
+    CharacterDatabase.PExecute("DELETE FROM template_npc_talents_pvp WHERE playerClass = '%s' AND playerSpec = '%s';", GetClassString(player).c_str(), playerSpecStr.c_str());
+    QueryResult result = CharacterDatabase.PQuery("SELECT spell FROM character_talent WHERE guid = '%u' "
+        "AND talentGroup = '%u';", player->GetGUID(), player->GetActiveSpec());
+
+    if (!result)
+    {
+        return;
+    }
+    else if (player->GetFreeTalentPoints() > 0)
+    {
+        player->GetSession()->SendAreaTriggerMessage("You have unspend talent points. Please spend all your talent points and re-extract the template.");
+        return;
+    }
+    else
+    {
+        do
+        {
+            Field* fields = result->Fetch();
+            uint32 spell = fields[0].GetUInt32();
+
+            CharacterDatabase.PExecute("INSERT INTO template_npc_talents_pvp (playerClass, playerSpec, talentId) "
+                "VALUES ('%s', '%s', '%u');", GetClassString(player).c_str(), playerSpecStr.c_str(), spell);
+        } while (result->NextRow());
+    }
+}
+
+void sTemplateNPC::ExtractTalentTreeId(Player* player, std::string& playerSpecStr)
+{
+    TC_LOG_INFO("server.worldserver", ">>TEMPLATE NPC: Extracting gear template for %s %s...", GetClassString(player).c_str(), playerSpecStr.c_str());
+    CharacterDatabase.PExecute("DELETE FROM template_npc_talents_tree_id WHERE playerSpec = '%s';", playerSpecStr.c_str());
+
+
+    CharacterDatabase.PExecute("INSERT INTO template_npc_talents_tree_id (`playerSpec`, `treeId`) VALUES ('%s', '%u');", playerSpecStr.c_str(), player->GetPrimaryTalentTree(player->GetActiveSpec()));
+}
+
+void sTemplateNPC::ExtractGlyphsTemplateToDBPvE(Player* player, std::string& playerSpecStr)
+{
+    CharacterDatabase.PExecute("DELETE FROM template_npc_glyphs_pve WHERE playerClass = '%s' AND playerSpec = '%s';", GetClassString(player).c_str(), playerSpecStr.c_str());
 
     QueryResult result = CharacterDatabase.PQuery("SELECT glyph1, glyph2, glyph3, glyph4, glyph5, glyph6, glyph7, glyph8, glyph9 "
         "FROM character_glyphs WHERE guid = '%u' AND talentGroup = '%u';", player->GetGUID(), player->GetActiveSpec());
@@ -549,11 +977,77 @@ void sTemplateNPC::ExtractGlyphsTemplateToDB(Player* player, std::string& player
     }
 }
 
-bool sTemplateNPC::CanEquipTemplate(Player* player, std::string& playerSpecStr)
+void sTemplateNPC::ExtractGlyphsTemplateToDBPvP(Player* player, std::string& playerSpecStr)
+{
+    CharacterDatabase.PExecute("DELETE FROM template_npc_glyphs_pvp WHERE playerClass = '%s' AND playerSpec = '%s';", GetClassString(player).c_str(), playerSpecStr.c_str());
+
+    QueryResult result = CharacterDatabase.PQuery("SELECT glyph1, glyph2, glyph3, glyph4, glyph5, glyph6, glyph7, glyph8, glyph9 "
+        "FROM character_glyphs WHERE guid = '%u' AND talentGroup = '%u';", player->GetGUID(), player->GetActiveSpec());
+
+    for (uint8 slot = 0; slot < MAX_GLYPH_SLOT_INDEX; ++slot)
+    {
+        if (!result)
+        {
+            player->GetSession()->SendAreaTriggerMessage("Get glyphs and re-extract the template!");
+            continue;
+        }
+
+        Field* fields = result->Fetch();
+        uint32 glyph1 = fields[0].GetUInt32();
+        uint32 glyph2 = fields[1].GetUInt32();
+        uint32 glyph3 = fields[2].GetUInt32();
+        uint32 glyph4 = fields[3].GetUInt32();
+        uint32 glyph5 = fields[4].GetUInt32();
+        uint32 glyph6 = fields[5].GetUInt32();
+        uint32 glyph7 = fields[6].GetUInt32();
+        uint32 glyph8 = fields[7].GetUInt32();
+        uint32 glyph9 = fields[8].GetUInt32();
+
+        uint32 storedGlyph;
+
+        switch (slot)
+        {
+        case 0:
+            storedGlyph = glyph1;
+            break;
+        case 1:
+            storedGlyph = glyph2;
+            break;
+        case 2:
+            storedGlyph = glyph3;
+            break;
+        case 3:
+            storedGlyph = glyph4;
+            break;
+        case 4:
+            storedGlyph = glyph5;
+            break;
+        case 5:
+            storedGlyph = glyph6;
+            break;
+        case 6:
+            storedGlyph = glyph7;
+            break;
+        case 7:
+            storedGlyph = glyph8;
+            break;
+        case 8:
+            storedGlyph = glyph9;
+            break;
+        default:
+            break;
+        }
+
+        CharacterDatabase.PExecute("INSERT INTO template_npc_glyphs (playerClass, playerSpec, slot, glyph) "
+            "VALUES ('%s', '%s', '%u', '%u');", GetClassString(player).c_str(), playerSpecStr.c_str(), slot, storedGlyph);
+    }
+}
+
+bool sTemplateNPC::CanEquipTemplatePvE(Player* player, std::string& playerSpecStr)
 {
     if (player->getRace() == RACE_HUMAN)
     {
-        QueryResult result = CharacterDatabase.PQuery("SELECT playerClass, playerSpec FROM template_npc_human "
+        QueryResult result = CharacterDatabase.PQuery("SELECT playerClass, playerSpec FROM template_npc_human_pve "
             "WHERE playerClass = '%s' AND playerSpec = '%s';", GetClassString(player).c_str(), playerSpecStr.c_str());
 
         if (!result)
@@ -561,7 +1055,7 @@ bool sTemplateNPC::CanEquipTemplate(Player* player, std::string& playerSpecStr)
     }
     else if (player->GetTeam() == ALLIANCE && player->getRace() != RACE_HUMAN)
     {
-        QueryResult result = CharacterDatabase.PQuery("SELECT playerClass, playerSpec FROM template_npc_alliance "
+        QueryResult result = CharacterDatabase.PQuery("SELECT playerClass, playerSpec FROM template_npc_alliance_pve "
             "WHERE playerClass = '%s' AND playerSpec = '%s';", GetClassString(player).c_str(), playerSpecStr.c_str());
 
         if (!result)
@@ -569,7 +1063,36 @@ bool sTemplateNPC::CanEquipTemplate(Player* player, std::string& playerSpecStr)
     }
     else if (player->GetTeam() == HORDE)
     {
-        QueryResult result = CharacterDatabase.PQuery("SELECT playerClass, playerSpec FROM template_npc_horde "
+        QueryResult result = CharacterDatabase.PQuery("SELECT playerClass, playerSpec FROM template_npc_horde_pve "
+            "WHERE playerClass = '%s' AND playerSpec = '%s';", GetClassString(player).c_str(), playerSpecStr.c_str());
+
+        if (!result)
+            return false;
+    }
+    return true;
+}
+
+bool sTemplateNPC::CanEquipTemplatePvP(Player* player, std::string& playerSpecStr)
+{
+    if (player->getRace() == RACE_HUMAN)
+    {
+        QueryResult result = CharacterDatabase.PQuery("SELECT playerClass, playerSpec FROM template_npc_human_pvp "
+            "WHERE playerClass = '%s' AND playerSpec = '%s';", GetClassString(player).c_str(), playerSpecStr.c_str());
+
+        if (!result)
+            return false;
+    }
+    else if (player->GetTeam() == ALLIANCE && player->getRace() != RACE_HUMAN)
+    {
+        QueryResult result = CharacterDatabase.PQuery("SELECT playerClass, playerSpec FROM template_npc_alliance_pvp "
+            "WHERE playerClass = '%s' AND playerSpec = '%s';", GetClassString(player).c_str(), playerSpecStr.c_str());
+
+        if (!result)
+            return false;
+    }
+    else if (player->GetTeam() == HORDE)
+    {
+        QueryResult result = CharacterDatabase.PQuery("SELECT playerClass, playerSpec FROM template_npc_horde_pvp "
             "WHERE playerClass = '%s' AND playerSpec = '%s';", GetClassString(player).c_str(), playerSpecStr.c_str());
 
         if (!result)
@@ -592,6 +1115,7 @@ public:
             ClearGossipMenuFor(player);
             AddGossipItemFor(player, GOSSIP_ICON_CHAT, "|cff00ff00|TInterface\\icons\\achievement_featsofstrength_gladiator_08:40|t|r Cataclysmic Gladiator Gear (Season 11)", GOSSIP_SENDER_MAIN, GOSSIP_PVP_GEAR);
             AddGossipItemFor(player, GOSSIP_ICON_CHAT, "|cff00ff00|TInterface\\icons\\achievment_boss_madnessofdeathwing:40|t|r Best in Slot Raid Gear (T13)", GOSSIP_SENDER_MAIN, GOSSIP_PVE_GEAR);
+            AddGossipItemFor(player, GOSSIP_ICON_CHAT, "Reset Talents.", GOSSIP_SENDER_MAIN, GOSSIP_RESET_TALENTS);
             if (player->getClass() == CLASS_HUNTER && player->HasSpell(MASTERY_HUNTER))
             {
                 AddGossipItemFor(player, GOSSIP_ICON_CHAT, "|cff00ff00|TInterface\\icons\\ability_hunter_pet_spider:40|t|r Hunter Pets", GOSSIP_SENDER_MAIN, GOSSIP_HUNTER_PET);
@@ -638,325 +1162,332 @@ public:
                 AddPetOptionsForHunter(player);
                 SendGossipMenuFor(player, 55002, me->GetGUID());
             }
+            else if (action == GOSSIP_RESET_TALENTS)
+            {
+                TC_LOG_INFO("server.worldserver", ">>TEMPLATE NPC: GOSSIP_RESET_TALENTS selected.");
+                player->ResetTalents(true);
+                player->SendTalentsInfoData(false);
+                CloseGossipMenuFor(player);
+            }
             
             switch (action)
             {
             // PVP
             case GOSSIP_PVP_GEAR + 1:
                 sTemplateNpcMgr->sTalentsSpec = "Arms-Warrior-PvP";
-                EquipFullTemplateGear(player, sTemplateNpcMgr->sTalentsSpec);
+                EquipFullTemplateGearPvP(player, sTemplateNpcMgr->sTalentsSpec);
                 CloseGossipMenuFor(player);
                 break;
             case GOSSIP_PVP_GEAR + 2:
                 sTemplateNpcMgr->sTalentsSpec = "Fury-Warrior-PvP";
-                EquipFullTemplateGear(player, sTemplateNpcMgr->sTalentsSpec);
+                EquipFullTemplateGearPvP(player, sTemplateNpcMgr->sTalentsSpec);
                 CloseGossipMenuFor(player);
                 break;
             case GOSSIP_PVP_GEAR + 3:
                 sTemplateNpcMgr->sTalentsSpec = "Protection-Warrior-PvP";
-                EquipFullTemplateGear(player, sTemplateNpcMgr->sTalentsSpec);
+                EquipFullTemplateGearPvP(player, sTemplateNpcMgr->sTalentsSpec);
                 CloseGossipMenuFor(player);
                 break;
             case GOSSIP_PVP_GEAR + 4:
                 sTemplateNpcMgr->sTalentsSpec = "Assassination-Rogue-PvP";
-                EquipFullTemplateGear(player, sTemplateNpcMgr->sTalentsSpec);
+                EquipFullTemplateGearPvP(player, sTemplateNpcMgr->sTalentsSpec);
                 CloseGossipMenuFor(player);
                 break;
             case GOSSIP_PVP_GEAR + 5:
                 sTemplateNpcMgr->sTalentsSpec = "Combat-Rogue-PvP";
-                EquipFullTemplateGear(player, sTemplateNpcMgr->sTalentsSpec);
+                EquipFullTemplateGearPvP(player, sTemplateNpcMgr->sTalentsSpec);
                 CloseGossipMenuFor(player);
                 break;
             case GOSSIP_PVP_GEAR + 6:
                 sTemplateNpcMgr->sTalentsSpec = "Subtlety-Rogue-PvP";
-                EquipFullTemplateGear(player, sTemplateNpcMgr->sTalentsSpec);
+                EquipFullTemplateGearPvP(player, sTemplateNpcMgr->sTalentsSpec);
                 CloseGossipMenuFor(player);
                 break;
             case GOSSIP_PVP_GEAR + 7:
                 sTemplateNpcMgr->sTalentsSpec = "Elemental-Shaman-PvP";
-                EquipFullTemplateGear(player, sTemplateNpcMgr->sTalentsSpec);
+                EquipFullTemplateGearPvP(player, sTemplateNpcMgr->sTalentsSpec);
                 CloseGossipMenuFor(player);
                 break;
             case GOSSIP_PVP_GEAR + 8:
                 sTemplateNpcMgr->sTalentsSpec = "Enhancement-Shaman-PvP";
-                EquipFullTemplateGear(player, sTemplateNpcMgr->sTalentsSpec);
+                EquipFullTemplateGearPvP(player, sTemplateNpcMgr->sTalentsSpec);
                 CloseGossipMenuFor(player);
                 break;
             case GOSSIP_PVP_GEAR + 9:
                 sTemplateNpcMgr->sTalentsSpec = "Restoration-Shaman-PvE";
-                EquipFullTemplateGear(player, sTemplateNpcMgr->sTalentsSpec);
+                EquipFullTemplateGearPvP(player, sTemplateNpcMgr->sTalentsSpec);
                 CloseGossipMenuFor(player);
                 break;
             case GOSSIP_PVP_GEAR + 10:
                 sTemplateNpcMgr->sTalentsSpec = "Beast-Mastery-Hunter-PvP";
-                EquipFullTemplateGear(player, sTemplateNpcMgr->sTalentsSpec);
+                EquipFullTemplateGearPvP(player, sTemplateNpcMgr->sTalentsSpec);
                 CloseGossipMenuFor(player);
                 break;
             case GOSSIP_PVP_GEAR + 11:
                 sTemplateNpcMgr->sTalentsSpec = "Marksmanship-Hunter-PvP";
-                EquipFullTemplateGear(player, sTemplateNpcMgr->sTalentsSpec);
+                EquipFullTemplateGearPvP(player, sTemplateNpcMgr->sTalentsSpec);
                 CloseGossipMenuFor(player);
                 break;
             case GOSSIP_PVP_GEAR + 12:
                 sTemplateNpcMgr->sTalentsSpec = "Survival-Hunter-PvP";
-                EquipFullTemplateGear(player, sTemplateNpcMgr->sTalentsSpec);
+                EquipFullTemplateGearPvP(player, sTemplateNpcMgr->sTalentsSpec);
                 CloseGossipMenuFor(player);
                 break;
             case GOSSIP_PVP_GEAR + 13:
                 sTemplateNpcMgr->sTalentsSpec = "Arcane-Mage-PvP";
-                EquipFullTemplateGear(player, sTemplateNpcMgr->sTalentsSpec);
+                EquipFullTemplateGearPvP(player, sTemplateNpcMgr->sTalentsSpec);
                 CloseGossipMenuFor(player);
                 break;
             case GOSSIP_PVP_GEAR + 14:
                 sTemplateNpcMgr->sTalentsSpec = "Fire-Mage-PvP";
-                EquipFullTemplateGear(player, sTemplateNpcMgr->sTalentsSpec);
+                EquipFullTemplateGearPvP(player, sTemplateNpcMgr->sTalentsSpec);
                 CloseGossipMenuFor(player);
                 break;
             case GOSSIP_PVP_GEAR + 15:
                 sTemplateNpcMgr->sTalentsSpec = "Frost-Mage-PvP";
-                EquipFullTemplateGear(player, sTemplateNpcMgr->sTalentsSpec);
+                EquipFullTemplateGearPvP(player, sTemplateNpcMgr->sTalentsSpec);
                 CloseGossipMenuFor(player);
                 break;
             case GOSSIP_PVP_GEAR + 16:
                 sTemplateNpcMgr->sTalentsSpec = "Affliction-Warlock-PvP";
-                EquipFullTemplateGear(player, sTemplateNpcMgr->sTalentsSpec);
+                EquipFullTemplateGearPvP(player, sTemplateNpcMgr->sTalentsSpec);
                 CloseGossipMenuFor(player);
                 break;
             case GOSSIP_PVP_GEAR + 17:
                 sTemplateNpcMgr->sTalentsSpec = "Demonology-Warlock-PvP";
-                EquipFullTemplateGear(player, sTemplateNpcMgr->sTalentsSpec);
+                EquipFullTemplateGearPvP(player, sTemplateNpcMgr->sTalentsSpec);
                 CloseGossipMenuFor(player);
                 break;
             case GOSSIP_PVP_GEAR + 18:
                 sTemplateNpcMgr->sTalentsSpec = "Destruction-Warlock-PvP";
-                EquipFullTemplateGear(player, sTemplateNpcMgr->sTalentsSpec);
+                EquipFullTemplateGearPvP(player, sTemplateNpcMgr->sTalentsSpec);
                 CloseGossipMenuFor(player);
                 break;
             case GOSSIP_PVP_GEAR + 19:
                 sTemplateNpcMgr->sTalentsSpec = "Holy-Paladin-PvP";
-                EquipFullTemplateGear(player, sTemplateNpcMgr->sTalentsSpec);
+                EquipFullTemplateGearPvP(player, sTemplateNpcMgr->sTalentsSpec);
                 CloseGossipMenuFor(player);
                 break;
             case GOSSIP_PVP_GEAR + 20:
                 sTemplateNpcMgr->sTalentsSpec = "Protection-Paladin-PvP";
-                EquipFullTemplateGear(player, sTemplateNpcMgr->sTalentsSpec);
+                EquipFullTemplateGearPvP(player, sTemplateNpcMgr->sTalentsSpec);
                 CloseGossipMenuFor(player);
                 break;
             case GOSSIP_PVP_GEAR + 21:
                 sTemplateNpcMgr->sTalentsSpec = "Retribution-Paladin-PvP";
-                EquipFullTemplateGear(player, sTemplateNpcMgr->sTalentsSpec);
+                EquipFullTemplateGearPvP(player, sTemplateNpcMgr->sTalentsSpec);
                 CloseGossipMenuFor(player);
                 break;
             case GOSSIP_PVP_GEAR + 22:
                 sTemplateNpcMgr->sTalentsSpec = "Balance-Druid-PvP";
-                EquipFullTemplateGear(player, sTemplateNpcMgr->sTalentsSpec);
+                EquipFullTemplateGearPvP(player, sTemplateNpcMgr->sTalentsSpec);
                 CloseGossipMenuFor(player);
                 break;
             case GOSSIP_PVP_GEAR + 23:
                 sTemplateNpcMgr->sTalentsSpec = "Feral-Druid-PvP";
-                EquipFullTemplateGear(player, sTemplateNpcMgr->sTalentsSpec);
+                EquipFullTemplateGearPvP(player, sTemplateNpcMgr->sTalentsSpec);
                 CloseGossipMenuFor(player);
                 break;
             case GOSSIP_PVP_GEAR + 31:
                 sTemplateNpcMgr->sTalentsSpec = "Guardian-Druid-PvP";
-                EquipFullTemplateGear(player, sTemplateNpcMgr->sTalentsSpec);
+                EquipFullTemplateGearPvP(player, sTemplateNpcMgr->sTalentsSpec);
                 CloseGossipMenuFor(player);
                 break;
             case GOSSIP_PVP_GEAR + 24:
                 sTemplateNpcMgr->sTalentsSpec = "Restoration-Druid-PvP";
-                EquipFullTemplateGear(player, sTemplateNpcMgr->sTalentsSpec);
+                EquipFullTemplateGearPvP(player, sTemplateNpcMgr->sTalentsSpec);
                 CloseGossipMenuFor(player);
                 break;
             case GOSSIP_PVP_GEAR + 25:
                 sTemplateNpcMgr->sTalentsSpec = "Blood-Death-Knight-PvP";
-                EquipFullTemplateGear(player, sTemplateNpcMgr->sTalentsSpec);
+                EquipFullTemplateGearPvP(player, sTemplateNpcMgr->sTalentsSpec);
                 CloseGossipMenuFor(player);
                 break;
             case GOSSIP_PVP_GEAR + 26:
                 sTemplateNpcMgr->sTalentsSpec = "Frost-Death-Knight-PvP";
-                EquipFullTemplateGear(player, sTemplateNpcMgr->sTalentsSpec);
+                EquipFullTemplateGearPvP(player, sTemplateNpcMgr->sTalentsSpec);
                 CloseGossipMenuFor(player);
                 break;
             case GOSSIP_PVP_GEAR + 27:
                 sTemplateNpcMgr->sTalentsSpec = "Unholy-Death-Knight-PvP";
-                EquipFullTemplateGear(player, sTemplateNpcMgr->sTalentsSpec);
+                EquipFullTemplateGearPvP(player, sTemplateNpcMgr->sTalentsSpec);
                 CloseGossipMenuFor(player);
                 break;
             case GOSSIP_PVP_GEAR + 28:
                 sTemplateNpcMgr->sTalentsSpec = "Discipline-Priest-PvP";
-                EquipFullTemplateGear(player, sTemplateNpcMgr->sTalentsSpec);
+                EquipFullTemplateGearPvP(player, sTemplateNpcMgr->sTalentsSpec);
                 CloseGossipMenuFor(player);
                 break;
             case GOSSIP_PVP_GEAR + 29:
                 sTemplateNpcMgr->sTalentsSpec = "Holy-Priest-PvP";
-                EquipFullTemplateGear(player, sTemplateNpcMgr->sTalentsSpec);
+                EquipFullTemplateGearPvP(player, sTemplateNpcMgr->sTalentsSpec);
                 CloseGossipMenuFor(player);
                 break;
             case GOSSIP_PVP_GEAR + 30:
                 sTemplateNpcMgr->sTalentsSpec = "Shadow-Priest-PvP";
-                EquipFullTemplateGear(player, sTemplateNpcMgr->sTalentsSpec);
+                EquipFullTemplateGearPvP(player, sTemplateNpcMgr->sTalentsSpec);
                 CloseGossipMenuFor(player);
                 break;
 
             // PVE
             case GOSSIP_PVE_GEAR + 1:
                 sTemplateNpcMgr->sTalentsSpec = "Arms-Warrior-PvE";
-                EquipFullTemplateGear(player, sTemplateNpcMgr->sTalentsSpec);
+                EquipFullTemplateGearPvE(player, sTemplateNpcMgr->sTalentsSpec);
                 CloseGossipMenuFor(player);
                 break;
             case GOSSIP_PVE_GEAR + 2:
                 sTemplateNpcMgr->sTalentsSpec = "Fury-Warrior-PvE-2H";
-                EquipFullTemplateGear(player, sTemplateNpcMgr->sTalentsSpec);
+                EquipFullTemplateGearPvE(player, sTemplateNpcMgr->sTalentsSpec);
                 CloseGossipMenuFor(player);
                 break;
             case GOSSIP_PVE_GEAR + 3:
                 sTemplateNpcMgr->sTalentsSpec = "Fury-Warrior-PvE-1H";
-                EquipFullTemplateGear(player, sTemplateNpcMgr->sTalentsSpec);
+                EquipFullTemplateGearPvE(player, sTemplateNpcMgr->sTalentsSpec);
                 CloseGossipMenuFor(player);
                 break;
             case GOSSIP_PVE_GEAR + 4:
                 sTemplateNpcMgr->sTalentsSpec = "Protection-Warrior-PvE";
-                EquipFullTemplateGear(player, sTemplateNpcMgr->sTalentsSpec);
+                EquipFullTemplateGearPvE(player, sTemplateNpcMgr->sTalentsSpec);
                 CloseGossipMenuFor(player);
                 break;
             case GOSSIP_PVE_GEAR + 5:
                 sTemplateNpcMgr->sTalentsSpec = "Assassination-Rogue-PvE";
-                EquipFullTemplateGear(player, sTemplateNpcMgr->sTalentsSpec);
+                EquipFullTemplateGearPvE(player, sTemplateNpcMgr->sTalentsSpec);
                 CloseGossipMenuFor(player);
                 break;
             case GOSSIP_PVE_GEAR + 6:
                 sTemplateNpcMgr->sTalentsSpec = "Combat-Rogue-PvE";
-                EquipFullTemplateGear(player, sTemplateNpcMgr->sTalentsSpec);
+                EquipFullTemplateGearPvE(player, sTemplateNpcMgr->sTalentsSpec);
                 CloseGossipMenuFor(player);
                 break;
             case GOSSIP_PVE_GEAR + 7:
                 sTemplateNpcMgr->sTalentsSpec = "Subtlety-Rogue-PvE";
-                EquipFullTemplateGear(player, sTemplateNpcMgr->sTalentsSpec);
+                EquipFullTemplateGearPvE(player, sTemplateNpcMgr->sTalentsSpec);
                 CloseGossipMenuFor(player);
                 break;
             case GOSSIP_PVE_GEAR + 8:
                 sTemplateNpcMgr->sTalentsSpec = "Elemental-Shaman-PvE";
-                EquipFullTemplateGear(player, sTemplateNpcMgr->sTalentsSpec);
+                EquipFullTemplateGearPvE(player, sTemplateNpcMgr->sTalentsSpec);
                 CloseGossipMenuFor(player);
                 break;
             case GOSSIP_PVE_GEAR + 9:
                 sTemplateNpcMgr->sTalentsSpec = "Enhancement-Shaman-PvE";
-                EquipFullTemplateGear(player, sTemplateNpcMgr->sTalentsSpec);
+                EquipFullTemplateGearPvE(player, sTemplateNpcMgr->sTalentsSpec);
                 CloseGossipMenuFor(player);
                 break;
             case GOSSIP_PVE_GEAR + 10:
                 sTemplateNpcMgr->sTalentsSpec = "Restoration-Shaman-PvE";
-                EquipFullTemplateGear(player, sTemplateNpcMgr->sTalentsSpec);
+                EquipFullTemplateGearPvE(player, sTemplateNpcMgr->sTalentsSpec);
                 CloseGossipMenuFor(player);
                 break;
             case GOSSIP_PVE_GEAR + 11:
                 sTemplateNpcMgr->sTalentsSpec = "Beast-Mastery-Hunter-PvE";
-                EquipFullTemplateGear(player, sTemplateNpcMgr->sTalentsSpec);
+                EquipFullTemplateGearPvE(player, sTemplateNpcMgr->sTalentsSpec);
                 CloseGossipMenuFor(player);
                 break;
             case GOSSIP_PVE_GEAR + 12:
                 sTemplateNpcMgr->sTalentsSpec = "Marksmanship-Hunter-PvE";
-                EquipFullTemplateGear(player, sTemplateNpcMgr->sTalentsSpec);
+                EquipFullTemplateGearPvE(player, sTemplateNpcMgr->sTalentsSpec);
                 CloseGossipMenuFor(player);
                 break;
             case GOSSIP_PVE_GEAR + 13:
                 sTemplateNpcMgr->sTalentsSpec = "Survival-Hunter-PvE";
-                EquipFullTemplateGear(player, sTemplateNpcMgr->sTalentsSpec);
+                EquipFullTemplateGearPvE(player, sTemplateNpcMgr->sTalentsSpec);
                 CloseGossipMenuFor(player);
                 break;
             case GOSSIP_PVE_GEAR + 14:
                 sTemplateNpcMgr->sTalentsSpec = "Arcane-Mage-PvE";
-                EquipFullTemplateGear(player, sTemplateNpcMgr->sTalentsSpec);
+                EquipFullTemplateGearPvE(player, sTemplateNpcMgr->sTalentsSpec);
                 CloseGossipMenuFor(player);
                 break;
             case GOSSIP_PVE_GEAR + 15:
                 sTemplateNpcMgr->sTalentsSpec = "Fire-Mage-PvE";
-                EquipFullTemplateGear(player, sTemplateNpcMgr->sTalentsSpec);
+                EquipFullTemplateGearPvE(player, sTemplateNpcMgr->sTalentsSpec);
                 CloseGossipMenuFor(player);
                 break;
             case GOSSIP_PVE_GEAR + 16:
                 sTemplateNpcMgr->sTalentsSpec = "Frost-Mage-PvE";
-                EquipFullTemplateGear(player, sTemplateNpcMgr->sTalentsSpec);
+                EquipFullTemplateGearPvE(player, sTemplateNpcMgr->sTalentsSpec);
                 CloseGossipMenuFor(player);
                 break;
             case GOSSIP_PVE_GEAR + 17:
                 sTemplateNpcMgr->sTalentsSpec = "Affliction-Warlock-PvE";
-                EquipFullTemplateGear(player, sTemplateNpcMgr->sTalentsSpec);
+                EquipFullTemplateGearPvE(player, sTemplateNpcMgr->sTalentsSpec);
                 CloseGossipMenuFor(player);
                 break;
             case GOSSIP_PVE_GEAR + 18:
                 sTemplateNpcMgr->sTalentsSpec = "Demonology-Warlock-PvE";
-                EquipFullTemplateGear(player, sTemplateNpcMgr->sTalentsSpec);
+                EquipFullTemplateGearPvE(player, sTemplateNpcMgr->sTalentsSpec);
                 CloseGossipMenuFor(player);
                 break;
             case GOSSIP_PVE_GEAR + 19:
                 sTemplateNpcMgr->sTalentsSpec = "Destruction-Warlock-PvE";
-                EquipFullTemplateGear(player, sTemplateNpcMgr->sTalentsSpec);
+                EquipFullTemplateGearPvE(player, sTemplateNpcMgr->sTalentsSpec);
                 CloseGossipMenuFor(player);
                 break;
             case GOSSIP_PVE_GEAR + 20:
                 sTemplateNpcMgr->sTalentsSpec = "Holy-Paladin-PvE";
-                EquipFullTemplateGear(player, sTemplateNpcMgr->sTalentsSpec);
+                EquipFullTemplateGearPvE(player, sTemplateNpcMgr->sTalentsSpec);
                 CloseGossipMenuFor(player);
                 break;
             case GOSSIP_PVE_GEAR + 21:
                 sTemplateNpcMgr->sTalentsSpec = "Protection-Paladin-PvE";
-                EquipFullTemplateGear(player, sTemplateNpcMgr->sTalentsSpec);
+                EquipFullTemplateGearPvE(player, sTemplateNpcMgr->sTalentsSpec);
                 CloseGossipMenuFor(player);
                 break;
             case GOSSIP_PVE_GEAR + 22:
                 sTemplateNpcMgr->sTalentsSpec = "Retribution-Paladin-PvE";
-                EquipFullTemplateGear(player, sTemplateNpcMgr->sTalentsSpec);
+                EquipFullTemplateGearPvE(player, sTemplateNpcMgr->sTalentsSpec);
                 CloseGossipMenuFor(player);
                 break;
             case GOSSIP_PVE_GEAR + 23:
                 sTemplateNpcMgr->sTalentsSpec = "Balance-Druid-PvE";
-                EquipFullTemplateGear(player, sTemplateNpcMgr->sTalentsSpec);
+                EquipFullTemplateGearPvE(player, sTemplateNpcMgr->sTalentsSpec);
                 CloseGossipMenuFor(player);
                 break;
             case GOSSIP_PVE_GEAR + 24:
                 sTemplateNpcMgr->sTalentsSpec = "Feral-Druid-PvE";
-                EquipFullTemplateGear(player, sTemplateNpcMgr->sTalentsSpec);
+                EquipFullTemplateGearPvE(player, sTemplateNpcMgr->sTalentsSpec);
                 CloseGossipMenuFor(player);
                 break;
             case GOSSIP_PVE_GEAR + 32:
                 sTemplateNpcMgr->sTalentsSpec = "Guardian-Druid-PvE";
-                EquipFullTemplateGear(player, sTemplateNpcMgr->sTalentsSpec);
+                EquipFullTemplateGearPvE(player, sTemplateNpcMgr->sTalentsSpec);
                 CloseGossipMenuFor(player);
                 break;
             case GOSSIP_PVE_GEAR + 25:
                 sTemplateNpcMgr->sTalentsSpec = "Restoration-Druid-PvE";
-                EquipFullTemplateGear(player, sTemplateNpcMgr->sTalentsSpec);
+                EquipFullTemplateGearPvE(player, sTemplateNpcMgr->sTalentsSpec);
                 CloseGossipMenuFor(player);
                 break;
             case GOSSIP_PVE_GEAR + 26:
                 sTemplateNpcMgr->sTalentsSpec = "Blood-Death-Knight-PvE";
-                EquipFullTemplateGear(player, sTemplateNpcMgr->sTalentsSpec);
+                EquipFullTemplateGearPvE(player, sTemplateNpcMgr->sTalentsSpec);
                 CloseGossipMenuFor(player);
                 break;
             case GOSSIP_PVE_GEAR + 27:
                 sTemplateNpcMgr->sTalentsSpec = "Frost-Death-Knight-PvE";
-                EquipFullTemplateGear(player, sTemplateNpcMgr->sTalentsSpec);
+                EquipFullTemplateGearPvE(player, sTemplateNpcMgr->sTalentsSpec);
                 CloseGossipMenuFor(player);
                 break;
             case GOSSIP_PVE_GEAR + 28:
                 sTemplateNpcMgr->sTalentsSpec = "Unholy-Death-Knight-PvE";
-                EquipFullTemplateGear(player, sTemplateNpcMgr->sTalentsSpec);
+                EquipFullTemplateGearPvE(player, sTemplateNpcMgr->sTalentsSpec);
                 CloseGossipMenuFor(player);
                 break;
             case GOSSIP_PVE_GEAR + 29:
                 sTemplateNpcMgr->sTalentsSpec = "Discipline-Priest-PvE";
-                EquipFullTemplateGear(player, sTemplateNpcMgr->sTalentsSpec);
+                EquipFullTemplateGearPvE(player, sTemplateNpcMgr->sTalentsSpec);
                 CloseGossipMenuFor(player);
                 break;
             case GOSSIP_PVE_GEAR + 30:
                 sTemplateNpcMgr->sTalentsSpec = "Holy-Priest-PvE";
-                EquipFullTemplateGear(player, sTemplateNpcMgr->sTalentsSpec);
+                EquipFullTemplateGearPvE(player, sTemplateNpcMgr->sTalentsSpec);
                 CloseGossipMenuFor(player);
                 break;
             case GOSSIP_PVE_GEAR + 31:
                 sTemplateNpcMgr->sTalentsSpec = "Shadow-Priest-PvE";
-                EquipFullTemplateGear(player, sTemplateNpcMgr->sTalentsSpec);
+                EquipFullTemplateGearPvE(player, sTemplateNpcMgr->sTalentsSpec);
                 CloseGossipMenuFor(player);
                 break;
 
@@ -1135,9 +1666,9 @@ public:
             SendGossipMenuFor(player, 55002, me->GetGUID());
         }
 
-        static void EquipFullTemplateGear(Player* player, std::string& playerSpecStr) // Merge
+        static void EquipFullTemplateGearPvE(Player* player, std::string& playerSpecStr) // Merge
         {
-            if (sTemplateNpcMgr->CanEquipTemplate(player, playerSpecStr) == false)
+            if (sTemplateNpcMgr->CanEquipTemplatePvE(player, playerSpecStr) == false)
             {
                 player->GetSession()->SendAreaTriggerMessage("There's no templates for %s specialization yet.", playerSpecStr.c_str());
                 return;
@@ -1150,27 +1681,14 @@ public:
                 {
                     if (haveItemEquipped)
                     {
-                        //player->GetSession()->SendAreaTriggerMessage("You need to remove all your equipped items in order to use this feature!");
-                        //CloseGossipMenuFor(player);
                         player->DestroyItem(INVENTORY_SLOT_BAG_0, i, true);
-                        //return;
                     }
                 }
             }
-
-            // Don't let players to use Template feature after spending some talent points
             
-            if (player->GetFreeTalentPoints() < 41)
-            {
-                //player->GetSession()->SendAreaTriggerMessage("You have already spent some talent points. You need to reset your talents first!");
-                //CloseGossipMenuFor(player);
-                //return;
-            }
-            
-
-            //sTemplateNpcMgr->LearnTemplateTalents(player);
-            sTemplateNpcMgr->LearnTemplateGlyphs(player);
-            sTemplateNpcMgr->EquipTemplateGear(player);
+            sTemplateNpcMgr->LearnTemplateTalentsPvE(player);
+            sTemplateNpcMgr->LearnTemplateGlyphsPvE(player);
+            sTemplateNpcMgr->EquipTemplateGearPvE(player);
             sTemplateNpcMgr->LearnPlateMailSpells(player);
 
             LearnGlyphs(player);
@@ -1201,28 +1719,39 @@ public:
 
         }
 
-        static void LearnOnlyTalentsAndGlyphs(Player* player, std::string& playerSpecStr) // Merge
+        static void EquipFullTemplateGearPvP(Player* player, std::string& playerSpecStr) // Merge
         {
-            if (sTemplateNpcMgr->CanEquipTemplate(player, playerSpecStr) == false)
+            if (sTemplateNpcMgr->CanEquipTemplatePvP(player, playerSpecStr) == false)
             {
                 player->GetSession()->SendAreaTriggerMessage("There's no templates for %s specialization yet.", playerSpecStr.c_str());
                 return;
             }
 
-            // Don't let players to use Template feature after spending some talent points
-            if (player->GetFreeTalentPoints() < 71)
+            // Don't let players to use Template feature while wearing some gear
+            for (uint8 i = EQUIPMENT_SLOT_START; i < EQUIPMENT_SLOT_END; ++i)
             {
-                player->GetSession()->SendAreaTriggerMessage("You have already spent some talent points. You need to reset your talents first!");
-                CloseGossipMenuFor(player);
-                return;
+                if (Item* haveItemEquipped = player->GetItemByPos(INVENTORY_SLOT_BAG_0, i))
+                {
+                    if (haveItemEquipped)
+                    {
+                        player->DestroyItem(INVENTORY_SLOT_BAG_0, i, true);
+                    }
+                }
             }
 
-            sTemplateNpcMgr->LearnTemplateTalents(player);
-            sTemplateNpcMgr->LearnTemplateGlyphs(player);
-            //sTemplateNpcMgr->EquipTemplateGear(player);
+            sTemplateNpcMgr->LearnTemplateTalentsPvP(player);
+            sTemplateNpcMgr->LearnTemplateGlyphsPvP(player);
+            sTemplateNpcMgr->EquipTemplateGearPvP(player);
             sTemplateNpcMgr->LearnPlateMailSpells(player);
 
-            player->GetSession()->SendAreaTriggerMessage("Successfuly learned talent spec %s!", playerSpecStr.c_str());
+            LearnGlyphs(player);
+
+            player->GetSession()->SendAreaTriggerMessage("Successfuly equipped %s %s template!", playerSpecStr.c_str(), sTemplateNpcMgr->GetClassString(player).c_str());
+
+            if (player->GetPowerType() == POWER_MANA)
+                player->SetFullPower(POWER_MANA);
+
+            player->SetFullHealth();
 
             // Learn Riding/Flying
             if (player->HasSpell(Artisan_Riding) ||
@@ -1240,6 +1769,7 @@ public:
             player->LearnSpell(Artisan_Riding, false);
             player->LearnSpell(Cold_Weather_Flying, false);
             player->LearnSpell(Amani_War_Bear, false);
+
         }
     };
 
@@ -1256,26 +1786,33 @@ public:
 
     void OnStartup() override
     {
-        // Load templates for Template NPC #1
         TC_LOG_INFO("server.loading", "== TEMPLATE NPC ===========================================================================");
-        TC_LOG_INFO("server.loading", "Loading Template Talents...");
-        sTemplateNpcMgr->LoadTalentsContainer();
+        TC_LOG_INFO("server.loading", "Loading Template Talents PvE...");
+        sTemplateNpcMgr->LoadTalentsContainerPvE();
 
-        // Load templates for Template NPC #2
-        TC_LOG_INFO("server.loading", "Loading Template Glyphs...");
-        sTemplateNpcMgr->LoadGlyphsContainer();
+        TC_LOG_INFO("server.loading", "Loading Template Glyphs PvE...");
+        sTemplateNpcMgr->LoadGlyphsContainerPvE();
 
-        // Load templates for Template NPC #3
-        TC_LOG_INFO("server.loading", "Loading Template Gear for Humans...");
-        sTemplateNpcMgr->LoadHumanGearContainer();
+        TC_LOG_INFO("server.loading", "Loading Template Gear for Humans PvE...");
+        sTemplateNpcMgr->LoadHumanGearContainerPvE();
 
-        // Load templates for Template NPC #4
-        TC_LOG_INFO("server.loading", "Loading Template Gear for Alliances...");
-        sTemplateNpcMgr->LoadAllianceGearContainer();
+        TC_LOG_INFO("server.loading", "Loading Template Gear for Alliance PvE...");
+        sTemplateNpcMgr->LoadAllianceGearContainerPvE();
 
-        // Load templates for Template NPC #5
-        TC_LOG_INFO("server.loading", "Loading Template Gear for Hordes...");
-        sTemplateNpcMgr->LoadHordeGearContainer();
+        TC_LOG_INFO("server.loading", "Loading Template Gear for Horde PvE...");
+        sTemplateNpcMgr->LoadHordeGearContainerPvE();
+
+        TC_LOG_INFO("server.loading", "Loading Template Talents PvP...");
+        sTemplateNpcMgr->LoadTalentsContainerPvP();
+
+        TC_LOG_INFO("server.loading", "Loading Template Glyphs PvP...");
+        sTemplateNpcMgr->LoadGlyphsContainerPvP();
+
+        TC_LOG_INFO("server.loading", "Loading Template Gear for Humans PvP...");
+        sTemplateNpcMgr->LoadHumanGearContainerPvP();
+
+        TC_LOG_INFO("server.loading", "Loading Template Talent Specializations...");
+        sTemplateNpcMgr->LoadTalentTreeId();
         TC_LOG_INFO("server.loading", "== END TEMPLATE NPC ===========================================================================");
     }
 };
@@ -1290,9 +1827,14 @@ public:
         static std::vector<ChatCommand> TemplateNPCTable =
         {
             { "reload",  SEC_ADMINISTRATOR, true,  &HandleReloadTemplateNPCCommand, "" },
-            { "gear",  SEC_ADMINISTRATOR, true,  &HandleExtractTemplateNPCGear, ""},
-            { "glyphs",  SEC_ADMINISTRATOR, true,  &HandleExtractTemplateNPCGlyphs, ""},
-            { "both",  SEC_ADMINISTRATOR, true,  &HandleExtractTemplateNPCBoth, ""}
+            { "gear-pve",  SEC_ADMINISTRATOR, true,  &HandleExtractTemplateNPCGearPvE, ""},
+            { "glyphs-pve",  SEC_ADMINISTRATOR, true,  &HandleExtractTemplateNPCGlyphsPvE, ""},
+            { "glyphs-pvp",  SEC_ADMINISTRATOR, true,  &HandleExtractTemplateNPCGlyphsPvP, ""},
+            { "talents-pve",  SEC_ADMINISTRATOR, true,  &HandleExtractTemplateNPCTalentsPvE, ""},
+            { "talents-pvp",  SEC_ADMINISTRATOR, true,  &HandleExtractTemplateNPCTalentsPvP, ""},
+            { "human-pvp",  SEC_ADMINISTRATOR, true,  &HandleExtractTemplateNPCGearHumanPvP, ""},
+            { "alliance-pvp",  SEC_ADMINISTRATOR, true,  &HandleExtractTemplateNPCGearAlliancePvP, ""},
+            { "horde-pvp",  SEC_ADMINISTRATOR, true,  &HandleExtractTemplateNPCGearHordePvP, ""}
         };
 
         static std::vector<ChatCommand> commandTable =
@@ -1305,18 +1847,23 @@ public:
     static bool HandleReloadTemplateNPCCommand(ChatHandler* handler, const char* /*args*/)
     {
         TC_LOG_INFO("server.loading", "misc", "Reloading templates for Template NPC table...");
-        sTemplateNpcMgr->LoadTalentsContainer();
-        sTemplateNpcMgr->LoadGlyphsContainer();
-        sTemplateNpcMgr->LoadHumanGearContainer();
-        sTemplateNpcMgr->LoadAllianceGearContainer();
-        sTemplateNpcMgr->LoadHordeGearContainer();
+        sTemplateNpcMgr->LoadTalentsContainerPvE();
+        sTemplateNpcMgr->LoadTalentsContainerPvP();
+        sTemplateNpcMgr->LoadGlyphsContainerPvE();
+        sTemplateNpcMgr->LoadHumanGearContainerPvE();
+        sTemplateNpcMgr->LoadAllianceGearContainerPvE();
+        sTemplateNpcMgr->LoadHordeGearContainerPvE();
+        sTemplateNpcMgr->LoadGlyphsContainerPvP();
+        sTemplateNpcMgr->LoadHumanGearContainerPvP();
+        sTemplateNpcMgr->LoadAllianceGearContainerPvP();
+        sTemplateNpcMgr->LoadHordeGearContainerPvP();
         handler->SendGlobalGMSysMessage("Template NPC templates reloaded.");
         return true;
     }
 
-    static bool HandleExtractTemplateNPCGear(ChatHandler* handler, const char* args)
+    static bool HandleExtractTemplateNPCGearPvE(ChatHandler* handler, const char* args)
     {
-        Player* player = handler->getSelectedPlayer();
+        Player* player = handler->GetSession()->GetPlayer();
         if (!player)
         {
             TC_LOG_INFO("server.worldserver", ">>TEMPLATE NPC: No player selected.");
@@ -1328,14 +1875,16 @@ public:
 
         TC_LOG_INFO("server.worldserver", ">>TEMPLATE NPC: GOSSIP_EXTRACT_GEAR selected.");
         TC_LOG_INFO("server.worldserver", ">>TEMPLATE NPC: Player %s sTalentsSpec: %s", player->GetName().c_str(), spec.c_str());
+        sTemplateNpcMgr->ExtractGearTemplateToDBPvE(player, sTemplateNpcMgr->sTalentsSpec);
 
-        sTemplateNpcMgr->ExtractGearTemplateToDB(player, sTemplateNpcMgr->sTalentsSpec);
+        handler->SendSysMessage("Successfully extracted PvE Gear for Player.");
+
         return true;
     }
 
-    static bool HandleExtractTemplateNPCGlyphs(ChatHandler* handler, const char* args)
+    static bool HandleExtractTemplateNPCGlyphsPvE(ChatHandler* handler, const char* args)
     {
-        Player* player = handler->getSelectedPlayer();
+        Player* player = handler->GetSession()->GetPlayer();
         if (!player)
         {
             // Handle the error appropriately, perhaps by sending a message to the admin
@@ -1345,18 +1894,17 @@ public:
 
         std::string spec = args;
         sTemplateNpcMgr->sTalentsSpec = spec;
-
-        TC_LOG_INFO("server.worldserver", ">>TEMPLATE NPC: GOSSIP_EXTRACT_GLYPHS selected.");
         TC_LOG_INFO("server.worldserver", ">>TEMPLATE NPC: Player %s sTalentsSpec: %s", player->GetName().c_str(), spec.c_str());
-        sTemplateNpcMgr->ExtractGlyphsTemplateToDB(player, sTemplateNpcMgr->sTalentsSpec);
+        sTemplateNpcMgr->ExtractGlyphsTemplateToDBPvE(player, sTemplateNpcMgr->sTalentsSpec);
+
+        handler->SendSysMessage("Successfully extracted PvE Glyphs for Player.");
 
         return true;
     }
 
-
-    static bool HandleExtractTemplateNPCBoth(ChatHandler* handler, const char* args)
+    static bool HandleExtractTemplateNPCTalentsPvE(ChatHandler* handler, const char* args)
     {
-        Player* player = handler->getSelectedPlayer();
+        Player* player = handler->GetSession()->GetPlayer();
         if (!player)
         {
             TC_LOG_INFO("server.worldserver", ">>TEMPLATE NPC: No player selected.");
@@ -1365,12 +1913,108 @@ public:
 
         std::string spec = args;
         sTemplateNpcMgr->sTalentsSpec = spec;
-
-        TC_LOG_INFO("server.worldserver", ">>TEMPLATE NPC: GOSSIP_EXTRACT_BOTH selected.");
         TC_LOG_INFO("server.worldserver", ">>TEMPLATE NPC: Player %s sTalentsSpec: %s", player->GetName().c_str(), spec.c_str());
+        sTemplateNpcMgr->ExtractTalentTemplateToDBPvE(player, sTemplateNpcMgr->sTalentsSpec);
+        sTemplateNpcMgr->ExtractTalentTreeId(player, sTemplateNpcMgr->sTalentsSpec);
 
-        sTemplateNpcMgr->ExtractGearTemplateToDB(player, sTemplateNpcMgr->sTalentsSpec);
-        sTemplateNpcMgr->ExtractGlyphsTemplateToDB(player, sTemplateNpcMgr->sTalentsSpec);
+        handler->SendSysMessage("Successfully extracted PvE Talents for Player.");
+
+        return true;
+    }
+
+    static bool HandleExtractTemplateNPCTalentsPvP(ChatHandler* handler, const char* args)
+    {
+        Player* player = handler->GetSession()->GetPlayer();
+        if (!player)
+        {
+            TC_LOG_INFO("server.worldserver", ">>TEMPLATE NPC: No player selected.");
+            return false;
+        }
+
+        std::string spec = args;
+        sTemplateNpcMgr->sTalentsSpec = spec;
+        TC_LOG_INFO("server.worldserver", ">>TEMPLATE NPC: Player %s sTalentsSpec: %s", player->GetName().c_str(), spec.c_str());
+        sTemplateNpcMgr->ExtractTalentTemplateToDBPvP(player, sTemplateNpcMgr->sTalentsSpec);
+        sTemplateNpcMgr->ExtractTalentTreeId(player, sTemplateNpcMgr->sTalentsSpec);
+
+        handler->SendSysMessage("Successfully extracted PvP Talents for Player.");
+
+        return true;
+    }
+
+    static bool HandleExtractTemplateNPCGlyphsPvP(ChatHandler* handler, const char* args)
+    {
+        Player* player = handler->GetSession()->GetPlayer();
+        if (!player)
+        {
+            TC_LOG_INFO("server.worldserver", ">>TEMPLATE NPC: No player selected.");
+            return false;
+        }
+
+        std::string spec = args;
+        sTemplateNpcMgr->sTalentsSpec = spec;
+        TC_LOG_INFO("server.worldserver", ">>TEMPLATE NPC: Player %s sTalentsSpec: %s", player->GetName().c_str(), spec.c_str());
+        sTemplateNpcMgr->ExtractGlyphsTemplateToDBPvP(player, sTemplateNpcMgr->sTalentsSpec);
+
+        handler->SendSysMessage("Successfully extracted PvP Glyphs for Player.");
+
+        return true;
+    }
+
+    static bool HandleExtractTemplateNPCGearHumanPvP(ChatHandler* handler, const char* args)
+    {
+        Player* player = handler->GetSession()->GetPlayer();
+        if (!player)
+        {
+            TC_LOG_INFO("server.worldserver", ">>TEMPLATE NPC: No player selected.");
+            return false;
+        }
+
+        std::string spec = args;
+        sTemplateNpcMgr->sTalentsSpec = spec;
+        TC_LOG_INFO("server.worldserver", ">>TEMPLATE NPC: Player %s sTalentsSpec: %s", player->GetName().c_str(), spec.c_str());
+        sTemplateNpcMgr->ExtractGearTemplateToDBHumanPvP(player, sTemplateNpcMgr->sTalentsSpec);
+
+        handler->SendSysMessage("Successfully extracted PvP Human Gear for Player.");
+
+        return true;
+    }
+
+    static bool HandleExtractTemplateNPCGearAlliancePvP(ChatHandler* handler, const char* args)
+    {
+        Player* player = handler->GetSession()->GetPlayer();
+        if (!player)
+        {
+            TC_LOG_INFO("server.worldserver", ">>TEMPLATE NPC: No player selected.");
+            return false;
+        }
+
+        std::string spec = args;
+        sTemplateNpcMgr->sTalentsSpec = spec;
+        TC_LOG_INFO("server.worldserver", ">>TEMPLATE NPC: Player %s sTalentsSpec: %s", player->GetName().c_str(), spec.c_str());
+        sTemplateNpcMgr->ExtractGearTemplateToDBAlliancePvP(player, sTemplateNpcMgr->sTalentsSpec);
+
+        handler->SendSysMessage("Successfully extracted PvP Alliance Gear for Player.");
+
+        return true;
+    }
+
+    static bool HandleExtractTemplateNPCGearHordePvP(ChatHandler* handler, const char* args)
+    {
+        Player* player = handler->GetSession()->GetPlayer();
+        if (!player)
+        {
+            TC_LOG_INFO("server.worldserver", ">>TEMPLATE NPC: No player selected.");
+            return false;
+        }
+
+        std::string spec = args;
+        sTemplateNpcMgr->sTalentsSpec = spec;
+        TC_LOG_INFO("server.worldserver", ">>TEMPLATE NPC: Player %s sTalentsSpec: %s", player->GetName().c_str(), spec.c_str());
+        sTemplateNpcMgr->ExtractGearTemplateToDBHordePvP(player, sTemplateNpcMgr->sTalentsSpec);
+
+        handler->SendSysMessage("Successfully extracted PvP Horde Gear for Player.");
+
         return true;
     }
 
