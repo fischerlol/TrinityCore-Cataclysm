@@ -30,6 +30,8 @@
 #include "SpellMgr.h"
 #include "SpellScript.h"
 #include "Log.h"
+#include "CombatPackets.h"
+#include "SpellDefines.h"
 
 enum HunterSpells
 {
@@ -82,7 +84,8 @@ enum HunterSpells
     SPELL_HUNTER_IMPROVED_STEADY_SHOT_TRIGGERED     = 53220,
     SPELL_HUNTER_THRILL_OF_THE_HUNT                 = 34720,
     SPELL_HUNTER_WILD_QUIVER_DAMAGE                 = 76663,
-    SPELL_LOCK_AND_LOAD_MARKER                      = 67544
+    SPELL_LOCK_AND_LOAD_MARKER                      = 67544,
+    SPELL_HUNTER_AIMED_SHOT_MASTER_MARKSMAN         = 82928,
 };
 
 enum HunterIcons
@@ -938,12 +941,12 @@ class spell_hun_trap_launcher : public AuraScript
 
     void AfterApply(AuraEffect const* aurEff, AuraEffectHandleModes /*mode*/)
     {
-        GetTarget()->CastSpell(GetTarget(), SPELL_HUNTER_IMPROVED_STEADY_SHOT_TRIGGERED, aurEff);
+        //GetTarget()->CastSpell(GetTarget(), SPELL_HUNTER_IMPROVED_STEADY_SHOT_TRIGGERED, aurEff);
     }
 
     void AfterRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
     {
-        GetTarget()->RemoveAurasDueToSpell(SPELL_HUNTER_IMPROVED_STEADY_SHOT_TRIGGERED);
+        //GetTarget()->RemoveAurasDueToSpell(SPELL_HUNTER_IMPROVED_STEADY_SHOT_TRIGGERED);
     }
 
     void Register() override
@@ -1415,6 +1418,46 @@ class spell_hun_serpent_spread : public AuraScript
     }
 };
 
+enum effectsMarksman
+{
+    SPELL_STEADY_SHOT = 56641,
+    AURA_READY_SET_AIM = 82925,
+    AURA_FIRE = 82926
+};
+
+class spell_hun_fire : public AuraScript
+{
+    enum effectAimedShot
+    {
+        SPELL_AIMED_SHOT_MASTER_MARKSMAN = 82928
+    };
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        // Because 19464 and 82928 has the same spellfamilymask
+        if (eventInfo.GetSpellInfo() && eventInfo.GetSpellInfo()->Id == SPELL_HUNTER_AIMED_SHOT_MASTER_MARKSMAN)
+            return true;
+
+        return false;
+    }
+
+    void CalcSpellMod(AuraEffect const* aurEff, SpellModifier*& modInfo)
+    {
+        modInfo = new SpellModifier(aurEff->GetBase());
+        modInfo->spellId = SPELL_AIMED_SHOT_MASTER_MARKSMAN;
+        modInfo->value = -1000;
+        modInfo->op = SpellModOp::ChangeCastTime;
+        modInfo->type = SPELLMOD_PCT;
+        modInfo->mask[0] = 0x00020000;
+    }
+
+    void Register()
+    {
+        DoCheckProc.Register(&spell_hun_fire::CheckProc);
+        DoEffectCalcSpellMod.Register(&spell_hun_fire::CalcSpellMod, EFFECT_1, SPELL_AURA_OVERRIDE_ACTIONBAR_SPELLS_TRIGGERED);
+    }
+};
+
 void AddSC_hunter_spell_scripts()
 {
     RegisterSpellScript(spell_hun_ancient_hysteria);
@@ -1457,4 +1500,5 @@ void AddSC_hunter_spell_scripts()
     RegisterSpellScript(spell_hun_tnt);
     RegisterSpellScript(spell_hun_trap_launcher);
     RegisterSpellScript(spell_hun_wild_quiver);
+    RegisterSpellScript(spell_hun_fire);
 }
