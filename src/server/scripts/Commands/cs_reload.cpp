@@ -46,6 +46,7 @@ EndScriptData */
 #include "WardenCheckMgr.h"
 #include "WaypointManager.h"
 #include "World.h"
+#include "../server/scripts/Custom/SpellRegulator/SpellRegulator.h"
 
 class reload_commandscript : public CommandScript
 {
@@ -160,6 +161,7 @@ public:
             { "waypoint_data",                 rbac::RBAC_PERM_COMMAND_RELOAD_WAYPOINT_DATA,                    true,  &HandleReloadWpCommand,                         "" },
             { "vehicle_accessory",             rbac::RBAC_PERM_COMMAND_RELOAD_VEHICLE_ACCESORY,                 true,  &HandleReloadVehicleAccessoryCommand,           "" },
             { "vehicle_template_accessory",    rbac::RBAC_PERM_COMMAND_RELOAD_VEHICLE_TEMPLATE_ACCESSORY,       true,  &HandleReloadVehicleTemplateAccessoryCommand,   "" },
+            { "spell_regulator",               rbac::RBAC_PERM_COMMAND_RELOAD_VEHICLE_TEMPLATE_ACCESSORY,       true,  &HandleReloadSpellRegulatorCommand,             "" },
         };
         static std::vector<ChatCommand> commandTable =
         {
@@ -230,6 +232,14 @@ public:
         LoadLootTables();
         handler->SendGlobalGMSysMessage("DB tables `*_loot_template` reloaded.");
         sConditionMgr->LoadConditions(true);
+        return true;
+    }
+
+    static bool HandleReloadSpellRegulatorCommand(ChatHandler* handler, const char* /*args*/)
+    {
+        TC_LOG_INFO("misc", "Re-Loading Spell Regulator Tables...");
+        handler->SendGlobalGMSysMessage("DB table `*_spellregulator` reloaded.");
+        sSpellRegulator->LoadFromDB();
         return true;
     }
 
